@@ -11,14 +11,22 @@ const generateBtn = document.getElementById('generateBtn');
 const deckTitle = document.getElementById('deckTitle');
 const statusText = document.getElementById('statusText');
 
-// --- 🏠 CONFIGURAÇÃO DA API (BITTO AI) ---
-
-const API_KEY = "AIzaSyBQCx1ep0eaN0f79i9U2wURNWnCvPSuJi8"; 
-
-// Modelo de IA (Balanceado para conhecimento geral e raciocínio)
+// Modelo de IA
 const MODEL_NAME = "gemini-2.0-flash";
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+// --- FUNÇÃO PARA BUSCAR A CHAVE NA PASTA 'api' ---
+async function getApiKey() {
+    try {
+        const response = await fetch('./api/config.json');
+        if (!response.ok) throw new Error("Não foi possível carregar a configuração da API.");
+        const config = await response.json();
+        return config.API_KEY;
+    } catch (error) {
+        console.error("Erro ao carregar chave de API:", error);
+        showToast('Erro de Configuração: API Key não encontrada.', 'error');
+        return null;
+    }
+}
 
 // Deck Inicial
 let currentDeck = [
@@ -67,15 +75,12 @@ if(nextBtn) {
 if(flipBtn) flipBtn.addEventListener('click', toggleFlip);
 if(flipCard) flipCard.addEventListener('click', toggleFlip);
 
-// --- ATALHOS DE TECLADO (CORRIGIDOS) ---
+// --- ATALHOS DE TECLADO ---
 document.addEventListener('keydown', (e) => {
-    // Agora vira com a SETA PARA CIMA ou ENTER (Espaço fica livre para scroll)
     if (e.code === 'ArrowUp' || e.code === 'Enter') { 
         e.preventDefault(); 
         toggleFlip(); 
     }
-    
-    // Navegação lateral
     if (e.code === 'ArrowRight') if(nextBtn) nextBtn.click();
     if (e.code === 'ArrowLeft') if(prevBtn) prevBtn.click();
 });
@@ -106,6 +111,13 @@ if(generateBtn) {
         }
 
         try {
+            // 1. Busca a chave
+            const apiKey = await getApiKey();
+            if (!apiKey) throw new Error("Chave de API inválida ou ausente.");
+
+            // 2. Monta a URL
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+
             // PROMPT BITTO (VERSÃO UNIVERSAL)
             const prompt = `
                 Você é o BITTO AI, um Tutor Universal especialista em Aprendizagem Acelerada.
@@ -136,7 +148,7 @@ if(generateBtn) {
                         "parts": [{ "text": prompt }]
                     }],
                     "generationConfig": {
-                        "temperature": 0.5, // Equilíbrio entre criatividade e precisão
+                        "temperature": 0.5,
                         "responseMimeType": "application/json"
                     }
                 })
@@ -163,7 +175,6 @@ if(generateBtn) {
             currentDeck = newDeck;
             currentIndex = 0;
             
-            // Verifica se foi um erro de tema para ajustar o título
             if(newDeck.length === 1 && newDeck[0].q.includes("Bloqueado")) {
                 if(deckTitle) deckTitle.innerText = "Tema Recusado";
                 showToast('Tema bloqueado por segurança.', 'error');

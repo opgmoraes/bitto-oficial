@@ -10,13 +10,22 @@ const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const reviewTitle = document.getElementById('reviewTitle');
 const statusText = document.getElementById('statusText');
 
-// --- 🏠 CONFIGURAÇÃO DA API (BITTO AI) ---
-const API_KEY = "AIzaSyBQCx1ep0eaN0f79i9U2wURNWnCvPSuJi8"; 
-
 // Modelo Gemini 2.0
 const MODEL_NAME = "gemini-2.0-flash"; 
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+// --- FUNÇÃO PARA BUSCAR A CHAVE NA PASTA 'api' ---
+async function getApiKey() {
+    try {
+        const response = await fetch('./api/config.json');
+        if (!response.ok) throw new Error("Não foi possível carregar a configuração da API.");
+        const config = await response.json();
+        return config.API_KEY;
+    } catch (error) {
+        console.error("Erro ao carregar chave de API:", error);
+        showToast('Erro de Configuração: API Key não encontrada.', 'error');
+        return null;
+    }
+}
 
 // --- EVENTO DE GERAR ---
 if(generateBtn) {
@@ -42,6 +51,13 @@ if(generateBtn) {
         }
 
         try {
+            // 1. Busca a chave de segurança
+            const apiKey = await getApiKey();
+            if (!apiKey) throw new Error("Chave de API inválida ou ausente.");
+
+            // 2. Constrói a URL dinamicamente
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+
             // --- PROMPT TÉCNICO & DIDÁTICO ---
             const prompt = `
                 Você é o BITTO AI, um Professor Especialista focado em Síntese Técnica.
@@ -172,7 +188,7 @@ if(generateBtn) {
     });
 }
 
-// --- FUNÇÃO DE BAIXAR PDF (CORREÇÃO DA TELA BRANCA) ---
+// --- FUNÇÃO DE BAIXAR PDF ---
 if(downloadPdfBtn) {
     downloadPdfBtn.addEventListener('click', () => {
         if (typeof html2pdf === 'undefined') {
@@ -184,49 +200,41 @@ if(downloadPdfBtn) {
         downloadPdfBtn.innerText = "⏳ Preparando...";
         downloadPdfBtn.disabled = true;
 
-        // 1. Clonar o conteúdo
         const element = document.getElementById('reviewOutput');
         const clone = element.cloneNode(true);
 
-        // 2. Criar uma "Tela de Impressão" (Overlay)
-        // Isso garante que o elemento esteja VISÍVEL para o gerador de PDF
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = '#ffffff'; // Fundo branco
-        overlay.style.zIndex = '999999'; // Fica por cima de tudo
-        overlay.style.overflowY = 'scroll'; // Permite rolar se necessário
+        overlay.style.backgroundColor = '#ffffff';
+        overlay.style.zIndex = '999999';
+        overlay.style.overflowY = 'scroll';
         overlay.style.display = 'flex';
         overlay.style.justifyContent = 'center';
         overlay.style.padding = '20px';
 
-        // 3. Preparar o Conteúdo A4
         const pdfContent = document.createElement('div');
         pdfContent.appendChild(clone);
         
-        // Estilização forçada para PDF bonito
-        pdfContent.style.width = '750px'; // Largura A4 aprox
-        pdfContent.style.color = '#000000'; // Texto preto
+        pdfContent.style.width = '750px';
+        pdfContent.style.color = '#000000';
         pdfContent.style.fontFamily = 'Helvetica, Arial, sans-serif';
         pdfContent.style.fontSize = '12pt';
         pdfContent.style.lineHeight = '1.6';
         pdfContent.style.backgroundColor = 'white';
 
-        // Garante que todos os textos internos sejam pretos (corrige problema de Dark Mode)
         const allElements = pdfContent.querySelectorAll('*');
         allElements.forEach(el => {
             el.style.color = '#000000';
             el.style.backgroundColor = 'transparent';
         });
 
-        // Adiciona à tela
         overlay.appendChild(pdfContent);
         document.body.appendChild(overlay);
 
-        // 4. Configuração do PDF
         const opt = {
             margin:       10, 
             filename:     `BITTO_Revisao_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`,
@@ -236,9 +244,8 @@ if(downloadPdfBtn) {
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
         };
 
-        // 5. Gera o PDF e depois remove a tela branca
         html2pdf().set(opt).from(pdfContent).save().then(() => {
-            document.body.removeChild(overlay); // Remove a tela branca
+            document.body.removeChild(overlay);
             downloadPdfBtn.innerText = oldText;
             downloadPdfBtn.disabled = false;
             showToast('PDF baixado com sucesso!', 'success');
