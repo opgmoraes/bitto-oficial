@@ -17,7 +17,7 @@ const MODEL_NAME = "gemini-2.0-flash";
 // --- FUNÇÃO PARA BUSCAR A CHAVE NA PASTA 'api' ---
 async function getApiKey() {
     try {
-        const response = await fetch('./api/config.json');
+        const response = await fetch('bitto-oficial/api/config.json');
         if (!response.ok) throw new Error("Não foi possível carregar a configuração da API.");
         const config = await response.json();
         return config.API_KEY;
