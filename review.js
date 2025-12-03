@@ -13,19 +13,9 @@ const statusText = document.getElementById('statusText');
 // Modelo Gemini 2.0
 const MODEL_NAME = "gemini-2.0-flash"; 
 
-// --- FUNÇÃO PARA BUSCAR A CHAVE NA PASTA 'api' ---
-async function getApiKey() {
-    try {
-        const response = await fetch('bitto-oficial/api/config.json');
-        if (!response.ok) throw new Error("Não foi possível carregar a configuração da API.");
-        const config = await response.json();
-        return config.API_KEY;
-    } catch (error) {
-        console.error("Erro ao carregar chave de API:", error);
-        showToast('Erro de Configuração: API Key não encontrada.', 'error');
-        return null;
-    }
-}
+// --- 🏠 CONFIGURAÇÃO DA API (MODELO ENV/VERCEL) ---
+// O Vite (usado pela Vercel) injeta a chave aqui automaticamente
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // --- EVENTO DE GERAR ---
 if(generateBtn) {
@@ -51,12 +41,13 @@ if(generateBtn) {
         }
 
         try {
-            // 1. Busca a chave de segurança
-            const apiKey = await getApiKey();
-            if (!apiKey) throw new Error("Chave de API inválida ou ausente.");
+            // Verificação de Segurança da Vercel
+            if (!API_KEY) {
+                throw new Error("ERRO DE CONFIGURAÇÃO: Chave de API não encontrada nas Variáveis de Ambiente.");
+            }
 
             // 2. Constrói a URL dinamicamente
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
             // --- PROMPT TÉCNICO & DIDÁTICO ---
             const prompt = `

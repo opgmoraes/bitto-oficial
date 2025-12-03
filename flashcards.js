@@ -14,19 +14,8 @@ const statusText = document.getElementById('statusText');
 // Modelo de IA
 const MODEL_NAME = "gemini-2.0-flash";
 
-// --- FUNÇÃO PARA BUSCAR A CHAVE NA PASTA 'api' ---
-async function getApiKey() {
-    try {
-        const response = await fetch('bitto-oficial/api/config.json');
-        if (!response.ok) throw new Error("Não foi possível carregar a configuração da API.");
-        const config = await response.json();
-        return config.API_KEY;
-    } catch (error) {
-        console.error("Erro ao carregar chave de API:", error);
-        showToast('Erro de Configuração: API Key não encontrada.', 'error');
-        return null;
-    }
-}
+// --- 🏠 CONFIGURAÇÃO DA API (MODELO ENV/VERCEL) ---
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // Deck Inicial
 let currentDeck = [
@@ -111,12 +100,13 @@ if(generateBtn) {
         }
 
         try {
-            // 1. Busca a chave
-            const apiKey = await getApiKey();
-            if (!apiKey) throw new Error("Chave de API inválida ou ausente.");
+             // Verificação de Segurança
+             if (!API_KEY) {
+                throw new Error("ERRO: Chave API não configurada na Vercel.");
+            }
 
             // 2. Monta a URL
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
             // PROMPT BITTO (VERSÃO UNIVERSAL)
             const prompt = `
