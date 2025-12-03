@@ -10,13 +10,6 @@ const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const reviewTitle = document.getElementById('reviewTitle');
 const statusText = document.getElementById('statusText');
 
-// Modelo Gemini 2.0
-const MODEL_NAME = "gemini-2.0-flash"; 
-
-// --- 🏠 CONFIGURAÇÃO DA API (MODELO ENV/VERCEL) ---
-// O Vite (usado pela Vercel) injeta a chave aqui automaticamente
-const API_KEY = import.meta.env.VITE_API_KEY;
-
 // --- EVENTO DE GERAR ---
 if(generateBtn) {
     generateBtn.addEventListener('click', async () => {
@@ -41,14 +34,6 @@ if(generateBtn) {
         }
 
         try {
-            // Verificação de Segurança da Vercel
-            if (!API_KEY) {
-                throw new Error("ERRO DE CONFIGURAÇÃO: Chave de API não encontrada nas Variáveis de Ambiente.");
-            }
-
-            // 2. Constrói a URL dinamicamente
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
-
             // --- PROMPT TÉCNICO & DIDÁTICO ---
             const prompt = `
                 Você é o BITTO AI, um Professor Especialista focado em Síntese Técnica.
@@ -116,22 +101,22 @@ if(generateBtn) {
                 - Idioma: Português Brasileiro.
             `;
 
-            const response = await fetch(API_URL, {
+            // --- CHAMADA AO BACKEND (VERCEL) ---
+            // Não expomos a chave aqui. Chamamos nossa API interna.
+            const response = await fetch('/api/generate', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    "contents": [{
-                        "parts": [{ "text": prompt }]
-                    }],
-                    "generationConfig": {
-                        "temperature": 0.4, 
-                    }
+                    model: "gemini-2.0-flash",
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }]
                 })
             });
 
             if (!response.ok) {
                 const errData = await response.json();
-                throw new Error(errData.error?.message || "Erro na conexão com BITTO AI");
+                throw new Error(errData.error || "Erro na conexão com o Servidor");
             }
 
             const data = await response.json();
@@ -165,6 +150,7 @@ if(generateBtn) {
                 <div style="text-align:center; padding: 20px; color: var(--accent-color);">
                     <h3>⚠️ Ops, erro na conexão.</h3>
                     <p>${error.message}</p>
+                    <small>Verifique se a chave API está configurada no Vercel (Environment Variables).</small>
                 </div>
             `;
             if(emptyState) emptyState.style.display = 'none';

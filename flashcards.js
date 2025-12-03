@@ -11,12 +11,6 @@ const generateBtn = document.getElementById('generateBtn');
 const deckTitle = document.getElementById('deckTitle');
 const statusText = document.getElementById('statusText');
 
-// Modelo de IA
-const MODEL_NAME = "gemini-2.0-flash";
-
-// --- 🏠 CONFIGURAÇÃO DA API (MODELO ENV/VERCEL) ---
-const API_KEY = import.meta.env.VITE_API_KEY;
-
 // Deck Inicial
 let currentDeck = [
     { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima (ex: "História", "SQL", "Anatomia") para gerar cards.' },
@@ -100,14 +94,6 @@ if(generateBtn) {
         }
 
         try {
-             // Verificação de Segurança
-             if (!API_KEY) {
-                throw new Error("ERRO: Chave API não configurada na Vercel.");
-            }
-
-            // 2. Monta a URL
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
-
             // PROMPT BITTO (VERSÃO UNIVERSAL)
             const prompt = `
                 Você é o BITTO AI, um Tutor Universal especialista em Aprendizagem Acelerada.
@@ -130,24 +116,21 @@ if(generateBtn) {
                 3. Idioma: Português Brasileiro.
             `;
 
-            const response = await fetch(API_URL, {
+            // --- CHAMADA AO BACKEND (VERCEL) ---
+            const response = await fetch('/api/generate', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    "contents": [{
-                        "parts": [{ "text": prompt }]
-                    }],
-                    "generationConfig": {
-                        "temperature": 0.5,
-                        "responseMimeType": "application/json"
-                    }
+                    model: "gemini-2.0-flash",
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }]
                 })
             });
 
             if (!response.ok) {
                 const errData = await response.json();
-                if(response.status === 404) throw new Error(`Modelo ${MODEL_NAME} não encontrado.`);
-                throw new Error(errData.error?.message || "Erro na API");
+                throw new Error(errData.error || "Erro na API Backend");
             }
 
             const data = await response.json();
