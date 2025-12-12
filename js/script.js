@@ -83,7 +83,8 @@ if(acceptConfirmBtn) {
         confirmModal.classList.remove('active');
         localStorage.removeItem('bitto_session');
         showToast("Desconectado com sucesso!", "info");
-        setTimeout(() => window.location.href = 'login.html', 1000);
+        // CORREÇÃO: Entrar na pasta pages/ para achar o login
+        setTimeout(() => window.location.href = 'pages/login.html', 1000);
     });
 }
 
