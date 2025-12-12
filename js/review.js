@@ -102,12 +102,11 @@ if(generateBtn) {
             `;
 
             // --- CHAMADA AO BACKEND (VERCEL) ---
-            // Não expomos a chave aqui. Chamamos nossa API interna.
             const response = await fetch('/api/generate', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "gemini-2.0-flash",
+                    model: "gemini-1.5-flash", // CORRIGIDO: Versão estável
                     contents: [{
                         parts: [{ text: prompt }]
                     }]
@@ -150,7 +149,7 @@ if(generateBtn) {
                 <div style="text-align:center; padding: 20px; color: var(--accent-color);">
                     <h3>⚠️ Ops, erro na conexão.</h3>
                     <p>${error.message}</p>
-                    <small>Verifique se a chave API está configurada no Vercel (Environment Variables).</small>
+                    <small>Tente novamente. Se persistir, verifique a API Key.</small>
                 </div>
             `;
             if(emptyState) emptyState.style.display = 'none';

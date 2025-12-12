@@ -21,11 +21,7 @@
         <div class="container nav-grid">
             
             <div class="nav-left">
-                <a href="index.html" class="logo-mini">
-                    <img src="../imagens/bittoofc.png" alt="B">
-                </a>
-                <div class="nav-divider"></div>
-                <a href="index.html" class="back-pill">
+                <a href="../index.html" class="back-pill">
                     <span class="icon">←</span> Voltar
                 </a>
             </div>
@@ -35,7 +31,7 @@
             </div>
 
             <div class="nav-right">
-                <button class="icon-button" id="themeToggle">
+                <button class="icon-button" id="themeToggle" title="Alternar Tema">
                     <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                     <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 </button>
@@ -44,80 +40,104 @@
         </div>
     </nav>
 
-    <div class="container main-wrapper quiz-container">
-        
-        <div id="quizSetup" class="quiz-card tilt-element">
-            <div class="quiz-header">
-                <div class="icon-box-large">🎮</div>
-                <h1>Desafio de Conhecimento</h1>
-                <p>Configure sua partida e teste suas habilidades.</p>
-            </div>
-
-            <div class="form-group">
-                <label>Tema do Quiz</label>
-                <input type="text" class="input-field" id="quizTopic" placeholder="Ex: JavaScript, História, Python...">
-            </div>
-
-            <div class="form-group">
-                <label>Dificuldade</label>
-                <div class="qty-selector-group">
-                    <label class="qty-option">
-                        <input type="radio" name="difficulty" value="Iniciante" checked>
-                        <div class="qty-btn">Fácil</div>
-                    </label>
-                    <label class="qty-option">
-                        <input type="radio" name="difficulty" value="Intermediário">
-                        <div class="qty-btn">Médio</div>
-                    </label>
-                    <label class="qty-option">
-                        <input type="radio" name="difficulty" value="Difícil">
-                        <div class="qty-btn">Difícil</div>
-                    </label>
-                </div>
-            </div>
-
-            <button class="btn-generate" id="startQuizBtn">
-                INICIAR PARTIDA 🚀
-            </button>
-            <p id="statusText" style="margin-top:15px; font-size:0.85rem; color:var(--text-muted); text-align:center; display:none;">Conectando ao Bitto...</p>
-        </div>
-
-        <div id="quizGame" class="quiz-card tilt-element" style="display: none;">
-            <div class="game-top-bar">
-                <div class="score-badge">🏆 <span id="currentScore">0</span></div>
-                <div class="progress-steps" id="progressSteps">
-                    </div>
-            </div>
-
-            <div class="question-area">
-                <h2 id="questionText">Carregando pergunta...</h2>
-            </div>
-
-            <div class="options-grid" id="optionsContainer">
-                </div>
-
-            <div id="feedbackArea" style="display: none;">
-                <div class="feedback-box" id="feedbackMsg">Resposta Correta!</div>
-                <button class="btn-generate" id="nextQuestionBtn">PRÓXIMA ➔</button>
-            </div>
-        </div>
-
-        <div id="quizResult" class="quiz-card tilt-element" style="display: none; text-align: center;">
-            <div class="result-icon">🏆</div>
-            <h1 class="result-title">Missão Cumprida!</h1>
-            <p class="result-desc">Você completou o desafio sobre <span id="resultTopic">Tema</span>.</p>
+    <div class="container main-wrapper">
+        <div class="quiz-layout">
             
-            <div class="final-score-box">
-                <span class="score-label">PONTUAÇÃO FINAL</span>
-                <span class="score-number" id="finalScore">400</span>
+            <div class="game-column">
+                
+                <div class="deck-header">
+                    <div class="deck-info">
+                        <h2 id="gameTitle">Desafio de Conhecimento</h2>
+                        <span class="counter-badge" id="scoreBadge">XP: 0</span>
+                    </div>
+                </div>
+
+                <div class="paper-sheet tilt-element">
+                    
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-icon">🎮</div>
+                        <h3>Configure sua Partida</h3>
+                        <p>Escolha um tema no painel ao lado e inicie o desafio.</p>
+                    </div>
+
+                    <div id="loadingState" class="empty-state" style="display: none;">
+                        <span class="loader-large"></span>
+                        <p id="statusText" style="margin-top: 20px;">Bitto está criando as perguntas...</p>
+                    </div>
+
+                    <div id="gameActive" style="display: none;">
+                        <div class="progress-steps" id="progressSteps"></div>
+                        
+                        <div class="question-header">
+                            <h2 id="questionText">...</h2>
+                        </div>
+
+                        <div class="options-grid" id="optionsContainer">
+                            </div>
+
+                        <div id="feedbackArea" class="feedback-container" style="display: none;">
+                            <div class="feedback-box" id="feedbackMsg"></div>
+                            <button class="action-btn" id="nextQuestionBtn" style="width: 100%; margin-top: 1rem;">
+                                PRÓXIMA ➔
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="gameResult" style="display: none; text-align: center; padding: 2rem 0;">
+                        <div class="result-icon">🏆</div>
+                        <h1 class="result-title">Missão Cumprida!</h1>
+                        <p class="result-desc">Você finalizou o desafio sobre <strong id="resultTopic">Tema</strong>.</p>
+                        
+                        <div class="final-score-box">
+                            <span class="score-label">PONTUAÇÃO TOTAL</span>
+                            <span class="score-number" id="finalScore">0</span>
+                        </div>
+
+                        <button class="nav-btn" onclick="location.reload()" style="margin: 0 auto;">
+                            JOGAR NOVAMENTE
+                        </button>
+                    </div>
+
+                </div>
             </div>
 
-            <div class="result-actions">
-                <button class="btn-generate" onclick="location.reload()">JOGAR NOVAMENTE</button>
-                <button class="nav-btn" onclick="window.location.href='index.html'">SAIR</button>
+            <div class="sidebar-column">
+                <div class="tool-panel creator-card">
+                    <div class="panel-header">
+                        <h3>Novo Quiz</h3>
+                        <span class="ai-badge">AUTO</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tema do Desafio</label>
+                        <input type="text" class="input-field" id="quizTopic" placeholder="Ex: CSS Grid, Revolução Industrial...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nível de Dificuldade</label>
+                        <div class="qty-selector-group">
+                            <label class="qty-option">
+                                <input type="radio" name="difficulty" value="Iniciante" checked>
+                                <div class="qty-box">Fácil</div>
+                            </label>
+                            <label class="qty-option">
+                                <input type="radio" name="difficulty" value="Intermediário">
+                                <div class="qty-box">Médio</div>
+                            </label>
+                            <label class="qty-option">
+                                <input type="radio" name="difficulty" value="Difícil">
+                                <div class="qty-box">Difícil</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" id="startQuizBtn">
+                        INICIAR QUIZ 🚀
+                    </button>
+                </div>
             </div>
+
         </div>
-
     </div>
 
     <script src="../js/quiz.js"></script>
