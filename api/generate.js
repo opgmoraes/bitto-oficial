@@ -17,28 +17,53 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'Chave de API não configurada no servidor.' });
+        console.error("ERRO: API Key não encontrada nas variáveis de ambiente.");
+        return res.status(500).json({ error: 'Chave de API não configurada.' });
     }
 
     const { contents, model } = req.body;
-    // CORREÇÃO: Usar gemini-1.5-flash como padrão para evitar erros de resposta vazia
+    // Força o modelo 1.5 Flash que é o mais rápido e estável
     const modelName = model || "gemini-1.5-flash";
 
     try {
+        // 2. Prepara a chamada com FILTROS DE SEGURANÇA REDUZIDOS
+        const requestBody = {
+            contents: contents,
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ]
+        };
+
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents })
+                body: JSON.stringify(requestBody)
             }
         );
 
         const data = await googleResponse.json();
+
+        // 3. Verifica se o Google retornou erro (mesmo com status 200 do fetch)
+        if (data.error) {
+            console.error("Erro retornado pelo Google:", data.error);
+            throw new Error(data.error.message);
+        }
+
+        // 4. Verifica se foi bloqueado por segurança (Candidates vazio)
+        if (!data.candidates || data.candidates.length === 0) {
+            console.error("Bloqueio de Segurança ou Resposta Vazia:", JSON.stringify(data));
+            return res.status(400).json({ error: "A IA bloqueou este tema por segurança. Tente reformular." });
+        }
+
         res.status(200).json(data);
 
     } catch (error) {
-        console.error("Erro no Backend:", error);
-        res.status(500).json({ error: 'Erro ao processar solicitação.' });
+        console.error("Erro Crítico no Backend:", error);
+        res.status(500).json({ error: 'Erro interno ao processar IA.' });
     }
 }
