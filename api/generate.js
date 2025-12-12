@@ -1,64 +1,49 @@
 // Arquivo: api/generate.js
 export default async function handler(req, res) {
-    // 1. Configuração de CORS (Obrigatório)
+    // 1. Configuração de CORS (Permite que seu site converse com esse backend)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
+    // Responde rápido se for só verificação do navegador
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
     }
 
+    // 2. Segurança: Pega a chave do servidor (Vercel)
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Chave de API não configurada no servidor.' });
+    }
+
+    // 3. Recebe os dados do Frontend
+    const { contents, model } = req.body;
+    const modelName = model || "gemini-2.0-flash";
+
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new Error("GEMINI_API_KEY não encontrada nas variáveis de ambiente.");
-        }
-
-        const { contents, model } = req.body;
-
-        // VOLTANDO PARA O SEU MODELO ORIGINAL
-        // Adicionei "-exp" pois é o nome técnico oficial para não dar erro de "not found"
-        const modelName = model || "gemini-2.0-flash-exp";
-
-        // 2. Configuração de Segurança (Isso impede o erro de "Resposta Vazia")
-        const requestBody = {
-            contents: contents,
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ]
-        };
-
+        // 4. Chama o Google (Server to Server)
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({ contents })
             }
         );
 
         const data = await googleResponse.json();
 
-        // 3. Verificação de erros reais do Google
-        if (data.error) {
-            // Se o modelo 2.0 estiver instável, ele vai avisar aqui
-            throw new Error(`Google API Error: ${data.error.message}`);
-        }
-
-        if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("Bloqueio de segurança ou modelo instável (resposta vazia).");
-        }
-
+        // 5. Devolve a resposta limpa para o seu site
         res.status(200).json(data);
 
     } catch (error) {
-        console.error("ERRO BACKEND:", error);
-        res.status(500).json({ error: `DEBUG: ${error.message}` });
+        console.error("Erro no Backend:", error);
+        res.status(500).json({ error: 'Erro ao processar solicitação.' });
     }
 }
