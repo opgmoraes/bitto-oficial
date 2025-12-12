@@ -112,7 +112,7 @@ async function fetchQuestions(topic, difficulty) {
 
     // ⚠️ Se você não tiver backend configurado, substitua este fetch pela chamada direta ao Gemini
     // igual você tinha no arquivo quiz.js antigo, apenas atualizando o prompt.
-    const response = await fetch('/api/generate', {
+    const response = await fetch('../api/generate', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

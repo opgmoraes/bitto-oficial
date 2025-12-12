@@ -103,7 +103,7 @@ if(generateBtn) {
 
             // --- CHAMADA AO BACKEND (VERCEL) ---
             // Não expomos a chave aqui. Chamamos nossa API interna.
-            const response = await fetch('/api/generate', {
+            const response = await fetch('../api/generate', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
