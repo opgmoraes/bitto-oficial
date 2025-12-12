@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     const { contents, model } = req.body;
     // Força o modelo 1.5 Flash que é o mais rápido e estável
-    const modelName = model || "gemini-1.5-flash";
+    const modelName = model || "gemini-2.0-flash";
 
     try {
         // 2. Prepara a chamada com FILTROS DE SEGURANÇA REDUZIDOS
