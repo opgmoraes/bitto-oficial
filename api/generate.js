@@ -1,6 +1,6 @@
 // Arquivo: api/generate.js
 export default async function handler(req, res) {
-    // 1. Configuração de CORS
+    // 1. Configuração de CORS (Para o site funcionar)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -13,19 +13,18 @@ export default async function handler(req, res) {
 
     try {
         const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("GEMINI_API_KEY não configurada no Vercel.");
+        if (!apiKey) throw new Error("Chave API não configurada na Vercel.");
 
         const { contents } = req.body;
 
-        // --- A CORREÇÃO ---
-        // Estamos usando a versão ESTÁVEL "002".
-        // O modelo 2.0 experimental está instável hoje, por isso estava falhando.
-        // Essa versão abaixo é garantida de funcionar.
-        const modelName = "gemini-1.5-flash-002";
+        // --- A MUDANÇA ---
+        // Usamos o apelido GENÉRICO. O Google escolhe a melhor versão estável.
+        // Isso evita o erro "model not found".
+        const modelName = "gemini-1.5-flash";
 
+        // Filtros de segurança relaxados para evitar "Resposta Vazia"
         const requestBody = {
             contents: contents,
-            // Filtros de segurança no mínimo para não bloquear estudos
             safetySettings: [
                 { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
@@ -45,15 +44,15 @@ export default async function handler(req, res) {
 
         const data = await googleResponse.json();
 
-        // Se der erro no Google, mostramos qual foi
+        // Se o Google retornar erro, mostramos qual foi
         if (data.error) {
             throw new Error(`Google Error: ${data.error.message}`);
         }
 
-        // Se vier vazio, é erro de filtro ou modelo
+        // Se a resposta vier vazia (bloqueio ou falha)
         if (!data.candidates || data.candidates.length === 0) {
-            console.log("Retorno completo do Google:", JSON.stringify(data)); 
-            throw new Error("A IA respondeu, mas o conteúdo veio vazio. (Bloqueio ou Instabilidade)");
+            console.log("JSON Retornado:", JSON.stringify(data));
+            throw new Error("A IA respondeu vazio. Pode ser bloqueio de segurança.");
         }
 
         res.status(200).json(data);
