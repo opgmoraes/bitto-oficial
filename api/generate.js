@@ -1,6 +1,6 @@
 // Arquivo: api/generate.js
 export default async function handler(req, res) {
-    // 1. Configuração de CORS (Permite que seu site converse com esse backend)
+    // 1. Configuração de CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -9,41 +9,51 @@ export default async function handler(req, res) {
         'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
     );
 
-    // Responde rápido se for só verificação do navegador
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
     }
 
-    // 2. Segurança: Pega a chave do servidor (Vercel)
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'Chave de API não configurada no servidor.' });
+        return res.status(500).json({ error: 'Chave de API não configurada.' });
     }
 
-    // 3. Recebe os dados do Frontend
     const { contents, model } = req.body;
-    const modelName = model || "gemini-2.0-flash";
+    // Garante que usa o -exp se o front não mandar, ou usa o que vier
+    const modelName = model || "gemini-2.0-flash-exp"; 
 
     try {
-        // 4. Chama o Google (Server to Server)
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents })
+                body: JSON.stringify({ 
+                    contents,
+                    // ADICIONAMOS ISSO AQUI PARA EVITAR RESPOSTA VAZIA 👇
+                    safetySettings: [
+                        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+                    ]
+                })
             }
         );
 
         const data = await googleResponse.json();
 
-        // 5. Devolve a resposta limpa para o seu site
+        // Se o Google der erro (ex: 400 ou 500), repassa para o front saber
+        if (!googleResponse.ok) {
+            return res.status(googleResponse.status).json(data);
+        }
+
         res.status(200).json(data);
 
     } catch (error) {
         console.error("Erro no Backend:", error);
-        res.status(500).json({ error: 'Erro ao processar solicitação.' });
+        res.status(500).json({ error: 'Erro interno ao processar solicitação.' });
     }
 }
