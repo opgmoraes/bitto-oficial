@@ -1,64 +1,49 @@
 // Arquivo: api/generate.js
 export default async function handler(req, res) {
-    // 1. Configuração de CORS (Para o site funcionar)
+    // 1. Configuração de CORS (Permite que seu site converse com esse backend)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
+    // Responde rápido se for só verificação do navegador
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
     }
 
+    // 2. Segurança: Pega a chave do servidor (Vercel)
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Chave de API não configurada no servidor.' });
+    }
+
+    // 3. Recebe os dados do Frontend
+    const { contents, model } = req.body;
+    const modelName = model || "gemini-2.0-flash";
+
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("Chave API não configurada na Vercel.");
-
-        const { contents } = req.body;
-
-        // --- A MUDANÇA ---
-        // Usamos o apelido GENÉRICO. O Google escolhe a melhor versão estável.
-        // Isso evita o erro "model not found".
-        const modelName = "gemini-1.5-flash";
-
-        // Filtros de segurança relaxados para evitar "Resposta Vazia"
-        const requestBody = {
-            contents: contents,
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ]
-        };
-
+        // 4. Chama o Google (Server to Server)
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({ contents })
             }
         );
 
         const data = await googleResponse.json();
 
-        // Se o Google retornar erro, mostramos qual foi
-        if (data.error) {
-            throw new Error(`Google Error: ${data.error.message}`);
-        }
-
-        // Se a resposta vier vazia (bloqueio ou falha)
-        if (!data.candidates || data.candidates.length === 0) {
-            console.log("JSON Retornado:", JSON.stringify(data));
-            throw new Error("A IA respondeu vazio. Pode ser bloqueio de segurança.");
-        }
-
+        // 5. Devolve a resposta limpa para o seu site
         res.status(200).json(data);
 
     } catch (error) {
-        console.error("ERRO:", error);
-        res.status(500).json({ error: `DEBUG: ${error.message}` });
+        console.error("Erro no Backend:", error);
+        res.status(500).json({ error: 'Erro ao processar solicitação.' });
     }
 }

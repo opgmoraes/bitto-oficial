@@ -13,7 +13,7 @@ const statusText = document.getElementById('statusText');
 
 // Deck Inicial
 let currentDeck = [
-    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima para gerar cards.' },
+    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima (ex: "História", "SQL", "Anatomia") para gerar cards.' },
     { q: 'Nova Navegação', a: 'Use as Setas ⬅️ ➡️ para mudar de card. Use Seta Cima ⬆️ ou Enter para virar.' }
 ];
 let currentIndex = 0;
@@ -24,8 +24,8 @@ function updateCardUI() {
     
     setTimeout(() => {
         if(currentDeck && currentDeck[currentIndex]) {
-            if(cardFrontText) cardFrontText.innerText = currentDeck[currentIndex].q;
-            if(cardBackText) cardBackText.innerText = currentDeck[currentIndex].a;
+            cardFrontText.innerText = currentDeck[currentIndex].q;
+            cardBackText.innerText = currentDeck[currentIndex].a;
             
             if(progressText) progressText.innerText = `${currentIndex + 1} / ${currentDeck.length}`;
             
@@ -68,7 +68,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') if(prevBtn) prevBtn.click();
 });
 
-// --- GERADOR BITTO ---
+// --- GERADOR BITTO UNIVERSAL ---
 if(generateBtn) {
     generateBtn.addEventListener('click', async () => {
         const topic = document.getElementById('deckTopic').value;
@@ -82,6 +82,7 @@ if(generateBtn) {
             return;
         }
 
+        // UI Loading
         const originalText = generateBtn.innerHTML;
         generateBtn.innerHTML = '<span class="loader"></span> CONSULTANDO BITTO...';
         generateBtn.classList.add('btn-loading');
@@ -93,22 +94,37 @@ if(generateBtn) {
         }
 
         try {
+            // PROMPT BITTO (VERSÃO UNIVERSAL)
             const prompt = `
-                Você é o BITTO AI, um Tutor Universal.
-                Analise o tema: "${topic}" e contexto: "${content}".
-                Crie um array JSON com EXATAMENTE ${quantity} flashcards.
+                Você é o BITTO AI, um Tutor Universal especialista em Aprendizagem Acelerada.
+                
+                TAREFA:
+                Analise o tema de estudo: "${topic}" e o contexto: "${content}".
+                Crie um array JSON com EXATAMENTE ${quantity} flashcards otimizados para memorização.
+                
+                DIRETRIZES DE PERSONALIDADE:
+                1. ADAPTABILIDADE: Se o tema for Matemática, foque em fórmulas e lógica. Se for História, foque em datas e eventos. Se for Culinária, foque em técnicas e ingredientes. Aja como um professor sênior daquela área específica.
+                2. DIDÁTICA: As perguntas devem ser desafiadoras mas claras. As respostas devem ser diretas ("curto e grosso") para facilitar a revisão rápida.
+                
+                TRAVA DE SEGURANÇA (SAFETY):
+                O objetivo é estudar. Se o tema for explícito, ilegal, discurso de ódio ou perigoso, RECUSE gerando este erro JSON:
+                [{"q": "Conteúdo Bloqueado 🛡️", "a": "A BITTO preza por um ambiente de estudos seguro. Este tema viola nossas diretrizes."}]
                 
                 SAÍDA OBRIGATÓRIA (JSON PURO):
-                [{"q": "Pergunta (Frente)", "a": "Resposta (Verso)"}]
-                Idioma: Português Brasileiro. Sem markdown.
+                1. Retorne APENAS o Array de objetos. Sem markdown, sem \`\`\`json.
+                2. Formato estrito: [{"q": "Pergunta (Frente)", "a": "Resposta (Verso)"}]
+                3. Idioma: Português Brasileiro.
             `;
 
-            // CORREÇÃO: Removido modelo específico. O backend decide.
+            // --- CHAMADA AO BACKEND (VERCEL) ---
             const response = await fetch('/api/generate', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
+                    model: "gemini-2.0-flash",
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }]
                 })
             });
 
@@ -122,11 +138,13 @@ if(generateBtn) {
             let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!rawText) throw new Error("A IA respondeu vazio.");
 
+            // Limpeza e Parse
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             const newDeck = JSON.parse(rawText);
 
             if (!Array.isArray(newDeck)) throw new Error("Formato inválido recebido.");
 
+            // Sucesso
             currentDeck = newDeck;
             currentIndex = 0;
             
@@ -147,7 +165,7 @@ if(generateBtn) {
 
         } catch (error) {
             console.error("Erro:", error);
-            showToast(error.message, 'error');
+            alert("Erro: " + error.message);
             if(statusText) statusText.innerText = "Falha: " + error.message;
             
         } finally {
@@ -160,22 +178,20 @@ if(generateBtn) {
 }
 
 // --- TEMA & TOAST ---
-if(themeToggle) {
-    themeToggle.addEventListener('click', () => {
-        const html = document.documentElement;
-        const sunIcon = document.querySelector('.icon-sun');
-        const moonIcon = document.querySelector('.icon-moon');
-        if (html.getAttribute('data-theme') === 'dark') {
-            html.setAttribute('data-theme', 'light');
-            if(sunIcon) sunIcon.style.display = 'block';
-            if(moonIcon) moonIcon.style.display = 'none';
-        } else {
-            html.setAttribute('data-theme', 'dark');
-            if(sunIcon) sunIcon.style.display = 'none';
-            if(moonIcon) moonIcon.style.display = 'block';
-        }
-    });
-}
+themeToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const sunIcon = document.querySelector('.icon-sun');
+    const moonIcon = document.querySelector('.icon-moon');
+    if (html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+});
 
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');

@@ -19,6 +19,12 @@ const resultTopicEl = document.getElementById('resultTopic');
 const gameTitle = document.getElementById('gameTitle');
 const statusText = document.getElementById('statusText');
 
+// CONFIGURAÇÃO
+// ⚠️ Se não usar backend, insira a chave aqui. Se usar backend (/api/generate), a chave fica no servidor.
+// Para este exemplo, manterei a estrutura do flashcards.js que sugere backend, 
+// mas você pode reverter para a chamada direta se preferir.
+const API_URL = "/api/generate"; 
+
 let questions = [];
 let currentQuestionIndex = 0;
 let score = 0;
@@ -42,17 +48,17 @@ if(startBtn) {
         startBtn.classList.add('btn-loading');
         startBtn.disabled = true;
 
-        if(emptyState) emptyState.style.display = 'none';
-        if(loadingState) loadingState.style.display = 'flex';
-        if(gameResult) gameResult.style.display = 'none';
-        if(gameActive) gameActive.style.display = 'none';
+        emptyState.style.display = 'none';
+        loadingState.style.display = 'flex';
+        gameResult.style.display = 'none';
+        gameActive.style.display = 'none';
 
         try {
             await fetchQuestions(topic, difficulty);
             
             // Sucesso
-            if(loadingState) loadingState.style.display = 'none';
-            if(gameActive) gameActive.style.display = 'block';
+            loadingState.style.display = 'none';
+            gameActive.style.display = 'block';
             if(gameTitle) gameTitle.innerText = topic;
             if(resultTopicEl) resultTopicEl.innerText = topic;
             
@@ -65,11 +71,16 @@ if(startBtn) {
 
         } catch (error) {
             console.error(error);
-            showToast('Erro ao criar quiz: ' + error.message, 'error');
+            showToast('Erro ao criar quiz. Tente novamente.', 'error');
             
-            if(loadingState) loadingState.style.display = 'none';
-            if(emptyState) emptyState.style.display = 'flex';
+            loadingState.style.display = 'none';
+            emptyState.style.display = 'flex';
+            
+            startBtn.innerHTML = originalText;
+            startBtn.classList.remove('btn-loading');
+            startBtn.disabled = false;
         } finally {
+             // Retorna botão ao normal caso sucesso
              startBtn.innerHTML = originalText;
              startBtn.classList.remove('btn-loading');
              startBtn.disabled = false;
@@ -77,7 +88,7 @@ if(startBtn) {
     });
 }
 
-// --- API FETCH CORRIGIDO ---
+// --- API FETCH (Estrutura Flashcards.js) ---
 async function fetchQuestions(topic, difficulty) {
     const prompt = `
         Gere um Quiz JSON válido sobre: "${topic}".
@@ -99,24 +110,23 @@ async function fetchQuestions(topic, difficulty) {
         2. Português Brasil.
     `;
 
-    // CORREÇÃO: Removida a linha 'model: ...' para evitar conflito. O backend decide.
+    // ⚠️ Se você não tiver backend configurado, substitua este fetch pela chamada direta ao Gemini
+    // igual você tinha no arquivo quiz.js antigo, apenas atualizando o prompt.
     const response = await fetch('/api/generate', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+            model: "gemini-2.0-flash", // Usando modelo rápido
             contents: [{ parts: [{ text: prompt }] }]
         })
     });
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro na API");
-    }
+    if (!response.ok) throw new Error("Erro na API");
 
     const data = await response.json();
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
-    if(!rawText) throw new Error("Resposta vazia da IA.");
+    if(!rawText) throw new Error("Resposta vazia.");
 
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
     questions = JSON.parse(rawText);
@@ -124,7 +134,6 @@ async function fetchQuestions(topic, difficulty) {
 
 // --- LÓGICA DO JOGO ---
 function setupProgressSteps() {
-    if(!progressSteps) return;
     progressSteps.innerHTML = '';
     for(let i=0; i<TOTAL_QUESTIONS; i++) {
         const step = document.createElement('div');
@@ -134,25 +143,26 @@ function setupProgressSteps() {
 }
 
 function updateProgress(isCorrect = null) {
-    if(!progressSteps) return;
     const steps = document.querySelectorAll('.step');
     
+    // Marca o anterior como concluído (com cor de erro/acerto se quiser)
     if(currentQuestionIndex > 0 && isCorrect !== null) {
         steps[currentQuestionIndex - 1].className = isCorrect ? 'step completed' : 'step wrong-history';
     }
 
+    // Marca o atual
     if(currentQuestionIndex < steps.length) {
         steps[currentQuestionIndex].className = 'step active';
     }
 }
 
 function loadQuestion() {
-    if(!questions[currentQuestionIndex]) return;
     const q = questions[currentQuestionIndex];
-    if(questionText) questionText.innerText = q.q;
-    if(optionsContainer) optionsContainer.innerHTML = '';
-    if(feedbackArea) feedbackArea.style.display = 'none';
+    questionText.innerText = q.q;
+    optionsContainer.innerHTML = '';
+    feedbackArea.style.display = 'none';
     
+    // Reset steps visual for current
     updateProgress(null);
 
     q.options.forEach((opt, idx) => {
@@ -160,7 +170,7 @@ function loadQuestion() {
         btn.className = 'option-btn';
         btn.innerText = opt;
         btn.onclick = () => checkAnswer(idx, btn);
-        if(optionsContainer) optionsContainer.appendChild(btn);
+        optionsContainer.appendChild(btn);
     });
 }
 
@@ -184,26 +194,23 @@ function checkAnswer(selectedIdx, btnElement) {
         showFeedback(false, q.why);
     }
     
-    // Atualiza visualmente o passo atual nos steps
+    // Atualiza step visualmente no próximo load ou agora
     const steps = document.querySelectorAll('.step');
-    if(steps[currentQuestionIndex]) {
-        steps[currentQuestionIndex].className = isCorrect ? 'step completed' : 'step wrong-history';
-    }
+    steps[currentQuestionIndex].className = isCorrect ? 'step completed' : 'step wrong-history';
 }
 
 function showFeedback(isCorrect, explanation) {
-    if(feedbackArea) {
-        feedbackArea.style.display = 'block';
-        if(isCorrect) {
-            feedbackMsg.innerHTML = `<strong>Correto! 🎉</strong><br>${explanation}`;
-            feedbackMsg.className = "feedback-box feedback-correct";
-        } else {
-            feedbackMsg.innerHTML = `<strong>Ops! ❌</strong><br>${explanation}`;
-            feedbackMsg.className = "feedback-box feedback-wrong";
-        }
+    feedbackArea.style.display = 'block';
+    if(isCorrect) {
+        feedbackMsg.innerHTML = `<strong>Correto! 🎉</strong><br>${explanation}`;
+        feedbackMsg.className = "feedback-box feedback-correct";
+    } else {
+        feedbackMsg.innerHTML = `<strong>Ops! ❌</strong><br>${explanation}`;
+        feedbackMsg.className = "feedback-box feedback-wrong";
     }
 }
 
+// --- PRÓXIMA ---
 if(nextBtn) {
     nextBtn.addEventListener('click', () => {
         currentQuestionIndex++;
@@ -216,9 +223,9 @@ if(nextBtn) {
 }
 
 function finishGame() {
-    if(gameActive) gameActive.style.display = 'none';
-    if(gameResult) gameResult.style.display = 'block';
-    if(finalScoreEl) finalScoreEl.innerText = score;
+    gameActive.style.display = 'none';
+    gameResult.style.display = 'block';
+    finalScoreEl.innerText = score;
     
     if(score >= 300) showToast('Parabéns! Excelente pontuação! 🏆', 'success');
 }
