@@ -116,7 +116,7 @@ async function fetchQuestions(topic, difficulty) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            model: "gemini-2.0-flash", // Usando modelo rápido
+            model: "gemini-2.5-flash-lite", // Usando modelo rápido
             contents: [{ parts: [{ text: prompt }] }]
         })
     });
