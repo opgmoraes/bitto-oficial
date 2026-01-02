@@ -1,6 +1,6 @@
 /* ARQUIVO: quiz.css */
 
-/* Reutiliza variáveis globais do styles.css */
+/* Reutiliza variáveis globais */
 :root {
     --paper-bg: #FFFFFF;
     --paper-text: #111111;
@@ -68,7 +68,7 @@
 .step { width: 40px; height: 6px; border-radius: 4px; background: var(--input-bg); transition: 0.3s; flex: 1; }
 .step.active { background: var(--primary-blue); transform: scaleY(1.5); }
 .step.completed { background: var(--accent-green); }
-.step.wrong-history { background: #ff4b4b; } /* Opcional: mostrar erros no histórico */
+.step.wrong-history { background: #ff4b4b; }
 
 /* PERGUNTA */
 .question-header h2 { 
@@ -116,7 +116,7 @@
 .input-field { width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: 0.2s; }
 .input-field:focus { border-color: var(--primary-blue); background: var(--card-bg); }
 
-/* SELETORES (DIFICULDADE) - IGUAL FLASHCARDS */
+/* SELETORES (DIFICULDADE) */
 .qty-selector-group { display: flex; gap: 10px; }
 .qty-option { flex: 1; position: relative; cursor: pointer; }
 .qty-option input { display: none; }
@@ -124,9 +124,12 @@
 .qty-option input:checked + .qty-box { background: var(--primary-blue); color: white; box-shadow: 0 5px 15px rgba(0, 53, 255, 0.3); transform: scale(1.02); }
 .qty-option:hover .qty-box { border-color: var(--primary-blue); color: var(--text-main); }
 
-.btn-generate { width: 100%; padding: 1.2rem; border: none; border-radius: 50px; background: var(--accent-green); color: var(--primary-blue); font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-top: 1rem; }
+.btn-generate { width: 100%; padding: 1.2rem; border: none; border-radius: 50px; background: var(--accent-green); color: #000; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-top: 1rem; display: flex; justify-content: center; align-items: center; gap: 8px;}
 .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(204, 255, 0, 0.4); }
 .btn-loading { opacity: 0.7; cursor: not-allowed; }
+
+/* Loader pequeno para botão */
+.loader { width: 16px; height: 16px; border: 2px solid #000; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
 
 /* Utilitários */
 .tilt-element { transition: transform 0.1s; transform-style: preserve-3d; }

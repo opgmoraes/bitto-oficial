@@ -5,7 +5,7 @@ const themeToggle = document.getElementById('themeToggle');
 const startBtn = document.getElementById('startQuizBtn');
 const nextBtn = document.getElementById('nextQuestionBtn');
 
-// Elementos de UI (MANTIDOS)
+// Elementos de UI
 const emptyState = document.getElementById('emptyState');
 const loadingState = document.getElementById('loadingState');
 const gameActive = document.getElementById('gameActive');
@@ -19,6 +19,7 @@ const progressSteps = document.getElementById('progressSteps');
 const finalScoreEl = document.getElementById('finalScore');
 const resultTopicEl = document.getElementById('resultTopic');
 const gameTitle = document.getElementById('gameTitle');
+const statusText = document.getElementById('statusText');
 
 let questions = [];
 let currentQuestionIndex = 0;
@@ -31,6 +32,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
     } else {
+        // Salva a URL atual para voltar depois do login (opcional)
         window.location.href = 'login.html';
     }
 });
@@ -47,7 +49,10 @@ if(startBtn) {
             return;
         }
 
-        if (!currentUser) return;
+        if (!currentUser) {
+            showToast('Aguarde a conexão...', 'info');
+            return;
+        }
 
         // 1. CHECK LIMIT
         const canUse = await checkUsageLimit(currentUser.uid, 'quiz');
@@ -62,6 +67,7 @@ if(startBtn) {
         startBtn.classList.add('btn-loading');
         startBtn.disabled = true;
 
+        if(statusText) statusText.innerText = "Bitto está elaborando as perguntas...";
         emptyState.style.display = 'none';
         loadingState.style.display = 'flex';
         gameResult.style.display = 'none';
@@ -70,7 +76,7 @@ if(startBtn) {
         try {
             await fetchQuestions(topic, difficulty);
             
-            // 2. INCREMENT USAGE
+            // 2. INCREMENT USAGE (Só conta se deu certo o fetch)
             await incrementUsage(currentUser.uid, 'quiz');
 
             // Sucesso
@@ -88,7 +94,7 @@ if(startBtn) {
 
         } catch (error) {
             console.error(error);
-            showToast('Erro ao criar quiz.', 'error');
+            showToast('Erro ao criar quiz: ' + error.message, 'error');
             loadingState.style.display = 'none';
             emptyState.style.display = 'flex';
         } finally {
@@ -108,6 +114,7 @@ async function fetchQuestions(topic, difficulty) {
         Regras: JSON PURO. Português.
     `;
 
+    // Fetch para a API Vercel
     const response = await fetch('../api/generate', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,6 +130,7 @@ async function fetchQuestions(topic, difficulty) {
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if(!rawText) throw new Error("Resposta vazia.");
 
+    // Limpeza do JSON (Remove markdown se houver)
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
     questions = JSON.parse(rawText);
 }
@@ -139,7 +147,7 @@ function setupProgressSteps() {
 
 function updateProgress(isCorrect = null) {
     const steps = document.querySelectorAll('.step');
-    if(currentQuestionIndex > 0 && isCorrect !== null) {
+    if(currentQuestionIndex > 0 && isCorrect !== null && currentQuestionIndex - 1 < steps.length) {
         steps[currentQuestionIndex - 1].className = isCorrect ? 'step completed' : 'step wrong-history';
     }
     if(currentQuestionIndex < steps.length) {
@@ -180,8 +188,9 @@ function checkAnswer(selectedIdx, btnElement) {
         buttons[correctIdx].classList.add('correct');
         showFeedback(false, q.why);
     }
-    const steps = document.querySelectorAll('.step');
-    steps[currentQuestionIndex].className = isCorrect ? 'step completed' : 'step wrong-history';
+    
+    // Atualiza visualmente o passo atual como certo ou errado
+    updateProgress(isCorrect);
 }
 
 function showFeedback(isCorrect, explanation) {
@@ -205,12 +214,22 @@ function finishGame() {
     if(score >= 300) showToast('Parabéns! Excelente pontuação! 🏆', 'success');
 }
 
-// --- TEMA E TOAST (MANTIDOS) ---
+// --- TEMA E TOAST ---
 if(themeToggle) {
     themeToggle.addEventListener('click', () => {
         const html = document.documentElement;
-        if (html.getAttribute('data-theme') === 'dark') html.setAttribute('data-theme', 'light');
-        else html.setAttribute('data-theme', 'dark');
+        const sunIcon = document.querySelector('.icon-sun');
+        const moonIcon = document.querySelector('.icon-moon');
+        
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.setAttribute('data-theme', 'light');
+            if(sunIcon) sunIcon.style.display = 'block';
+            if(moonIcon) moonIcon.style.display = 'none';
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            if(sunIcon) sunIcon.style.display = 'none';
+            if(moonIcon) moonIcon.style.display = 'block';
+        }
     });
 }
 
@@ -223,7 +242,14 @@ function showToast(message, type = 'success') {
     }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${message}`;
+    
+    let icon = type === 'success' ? '✅' : '⚠️';
+    if(type === 'error') icon = '❌';
+
+    toast.innerHTML = `<span>${icon}</span> ${message}`;
     container.appendChild(toast);
-    setTimeout(() => { toast.remove() }, 3500);
+    setTimeout(() => { 
+        toast.style.animation = "fadeOutToast 0.3s ease forwards"; 
+        setTimeout(() => toast.remove(), 300); 
+    }, 3000);
 }
