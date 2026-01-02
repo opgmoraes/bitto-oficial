@@ -44,10 +44,10 @@ if(themeToggle) {
     });
 }
 
-// --- ANIMAÇÃO TILT 3D (RESTAURADA DO SEU ARQUIVO ORIGINAL) ---
+// --- ANIMAÇÃO TILT 3D ---
 const tiltElement = document.querySelector('.tilt-element');
 document.addEventListener('mousemove', (e) => {
-    if(tiltElement && window.innerWidth > 900) { // Só ativa em PC
+    if(tiltElement && window.innerWidth > 900) { 
         const rect = tiltElement.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -98,19 +98,25 @@ async function handleGoogleLogin() {
 if(googleBtnLogin) googleBtnLogin.addEventListener('click', handleGoogleLogin);
 if(googleBtnRegister) googleBtnRegister.addEventListener('click', handleGoogleLogin);
 
-// LOGIN EMAIL
+// LOGIN EMAIL (CORRIGIDO COM GETELEMENTBYID)
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = loginForm.querySelector('input[type="email"]').value;
-    const pass = loginForm.querySelector('input[type="password"]').value;
+    
+    const emailInput = document.getElementById('loginEmail');
+    const passInput = document.getElementById('loginPass');
     const btn = loginForm.querySelector('button[type="submit"]');
     const originalText = btn.innerHTML;
+
+    if (!emailInput || !passInput) {
+        showToast("Erro interno: Campos não encontrados.", "error");
+        return;
+    }
 
     try {
         btn.innerHTML = '<span class="loader"></span> Entrando...';
         btn.classList.add('btn-loading');
 
-        const result = await signInWithEmailAndPassword(auth, email, pass);
+        const result = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
         await syncUserDatabase(result.user);
 
         showToast("Login realizado!", "success");
@@ -125,29 +131,39 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// REGISTRO EMAIL
+// REGISTRO EMAIL (CORRIGIDO COM GETELEMENTBYID)
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const nameInput = registerForm.querySelector('input[autocomplete="name"]');
-    const email = registerForm.querySelector('input[type="email"]').value;
-    const pass = registerForm.querySelector('input[type="password"]').value;
+    
+    const nameInput = document.getElementById('regName');
+    const emailInput = document.getElementById('regEmail');
+    const passInput = document.getElementById('regPass');
     const btn = registerForm.querySelector('button[type="submit"]');
     const originalText = btn.innerHTML;
+
+    if (!nameInput || !emailInput || !passInput) {
+        showToast("Erro interno: Campos de registro não encontrados.", "error");
+        return;
+    }
 
     try {
         btn.innerHTML = '<span class="loader"></span> Criando...';
         btn.classList.add('btn-loading');
 
-        const result = await createUserWithEmailAndPassword(auth, email, pass);
+        const result = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
         
-        // Atualiza display name
+        // Atualiza display name no Firebase
         const user = result.user;
-        user.displayName = nameInput.value; 
+        
+        // Define propriedade displayName manualmente antes de salvar no banco, caso o Firebase demore a atualizar
+        Object.defineProperty(user, 'displayName', { value: nameInput.value, writable: true });
+        
         await syncUserDatabase(user);
 
         showToast("Conta criada! Bem-vindo.", "success");
         setTimeout(() => window.location.href = '../index.html', 1500);
     } catch (error) {
+        console.error(error);
         let msg = "Erro ao criar conta.";
         if(error.code === 'auth/email-already-in-use') msg = "Email já cadastrado.";
         if(error.code === 'auth/weak-password') msg = "Senha muito fraca.";
@@ -157,7 +173,7 @@ registerForm.addEventListener('submit', async (e) => {
     }
 });
 
-// UI
+// UI - ALTERNÂNCIA DE TELAS
 showRegisterBtn.addEventListener('click', (e) => {
     e.preventDefault();
     loginForm.classList.remove('active');
@@ -174,6 +190,7 @@ showLoginBtn.addEventListener('click', (e) => {
     formSubtitle.innerText = "Entre para continuar seus estudos";
 });
 
+// FUNÇÃO TOAST
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
     if(!container) {
