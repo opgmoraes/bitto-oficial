@@ -285,3 +285,30 @@ function showToast(message, type = 'success') {
     container.appendChild(toast);
     setTimeout(() => { toast.remove() }, 3000);
 }
+
+// --- LÓGICA DO MENU MOBILE (ADICIONADO NO FINAL) ---
+const mobileBtn = document.getElementById('mobileMenuBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+
+if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener('click', () => {
+        // Alterna a classe 'active'
+        mobileMenu.classList.toggle('active');
+        
+        // Muda o ícone (☰ para ✕)
+        if (mobileMenu.classList.contains('active')) {
+            mobileBtn.innerHTML = '✕';
+        } else {
+            mobileBtn.innerHTML = '☰';
+        }
+    });
+
+    // Fecha o menu ao clicar em qualquer link dele
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            mobileBtn.innerHTML = '☰';
+        });
+    });
+}

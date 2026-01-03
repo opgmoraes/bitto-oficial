@@ -19,6 +19,8 @@
     <nav class="navbar">
         <div class="container nav-content">
             <div class="nav-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
                 <a href="#" class="logo">
                     <div class="logo-icon">
                         <img src="imagens/bittoofc.png" alt="Bitto Logo">
@@ -63,6 +65,15 @@
                         </ul>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <a href="index.html" class="mobile-link">🏠 Dashboard</a>
+            <a href="pages/history.html" class="mobile-link">📅 Histórico</a>
+            <a href="#" class="mobile-link" onclick="document.getElementById('navConfigBtn').click()">⚙️ Configurações</a>
+            <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                <a href="#" class="mobile-link" onclick="document.getElementById('logoutBtn').click()" style="color: #FF4B4B;">🚪 Sair</a>
             </div>
         </div>
     </nav>
