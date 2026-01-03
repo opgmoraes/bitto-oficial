@@ -147,7 +147,7 @@ if(generateBtn) {
             await incrementUsage(currentUser.uid, 'flashcards');
             
             // --- 3. ATUALIZA ESTATÍSTICAS E XP (NOVO) ---
-            if(window.recordGeneration) window.recordGeneration(quantity); // Conta cards gerados
+            if(window.recordActivity) window.recordActivity('flashcards', parseInt(qty)); // Conta cards gerados
             if(window.awardXP) window.awardXP(10, 'Criação de Deck'); // XP por criar
 
             if(deckTitle) deckTitle.innerText = topic || "Deck Gerado";

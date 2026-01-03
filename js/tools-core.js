@@ -1,24 +1,23 @@
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { addUserXP, trackGeneration } from './xpSystem.js';
+import { addUserXP, trackActivity } from './xpSystem.js';
 
-// ELEMENTOS DA UI (Navbar)
+// ELEMENTOS DA UI
 const navName = document.getElementById('navUserName');
 const navAvatar = document.querySelector('.avatar-circle');
 
-// --- 1. AUTENTICAÇÃO E REAL-TIME ---
+// --- 1. AUTENTICAÇÃO ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Listener em Tempo Real (Para garantir que dados estão frescos)
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
-                const data = docSnapshot.data();
-                updateToolHeader(user, data);
+                updateToolHeader(user, docSnapshot.data());
             }
         });
     } else {
-        window.location.href = '../pages/login.html'; // Ajuste o caminho conforme necessidade
+        // Ajuste o caminho se necessário (ex: ../pages/login.html)
+        window.location.href = 'login.html'; 
     }
 });
 
@@ -33,8 +32,8 @@ function updateToolHeader(user, dbData) {
     }
 }
 
-// --- 2. SISTEMA DE GANHAR XP (Global) ---
-window.awardXP = async (amount, source = "Atividade") => {
+// --- 2. SISTEMA DE XP ---
+window.awardXP = async (amount, source) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
@@ -45,14 +44,15 @@ window.awardXP = async (amount, source = "Atividade") => {
     }
 };
 
-// --- 3. SISTEMA DE CONTAR CARDS GERADOS ---
-window.recordGeneration = async (amount) => {
+// --- 3. SISTEMA DE REGISTRO (NOVO) ---
+// type: 'flashcards', 'quiz', 'review'
+window.recordActivity = async (type, amount = 1) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
-        await trackGeneration(user.uid, amount);
+        await trackActivity(user.uid, type, amount);
     } catch (error) {
-        console.error("Erro Generation:", error);
+        console.error("Erro Activity:", error);
     }
 };
 

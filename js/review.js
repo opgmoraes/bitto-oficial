@@ -85,7 +85,7 @@ if(generateBtn) {
             await incrementUsage(currentUser.uid, 'review');
             
             // --- 3. XP E ESTATÍSTICAS (NOVO) ---
-            if(window.recordGeneration) window.recordGeneration(1); // Conta geração
+            if(window.recordActivity) window.recordActivity('review', 1); // Conta geração
             if(window.awardXP) window.awardXP(20, 'Resumo IA'); // Ganha XP
 
             // UI Sucesso

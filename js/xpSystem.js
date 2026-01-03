@@ -29,14 +29,18 @@ export async function checkMonthlyReset(user) {
     if (snap.exists()) {
         const data = snap.data();
         
-        // Se mudou o mês, ZERA XP e CARDS GERADOS
+        // Se mudou o mês, ZERA TUDO
         if (data.lastResetMonth !== currentMonth) {
             console.log("📅 Novo mês! Resetando estatísticas...");
             await updateDoc(userRef, {
                 xp: 0,
                 level: 1,
                 lastResetMonth: currentMonth,
-                "stats.cardsGeneratedMonth": 0 // Zera contagem mensal
+                // Zera os contadores específicos
+                "stats.cardsGeneratedMonth": 0, // Total Geral
+                "stats.flashcardsGen": 0,
+                "stats.quizGen": 0,
+                "stats.reviewGen": 0
             });
             return 0; 
         }
@@ -51,7 +55,10 @@ export async function checkMonthlyReset(user) {
             lastResetMonth: currentMonth,
             photoURL: user.photoURL || "",
             stats: {
-                cardsGeneratedMonth: 0 // Começa com 0
+                cardsGeneratedMonth: 0,
+                flashcardsGen: 0,
+                quizGen: 0,
+                reviewGen: 0
             }
         }, { merge: true });
         return 0;
@@ -61,21 +68,25 @@ export async function checkMonthlyReset(user) {
 // --- FUNÇÃO PARA DAR XP ---
 export async function addUserXP(userId, amount) {
     const userRef = doc(db, "users", userId);
-    // Usamos 'increment' do Firestore para garantir que o valor suba mesmo com conexões instáveis
     await updateDoc(userRef, {
         xp: increment(amount)
     });
-    
-    // Verificação de nível fazemos lendo o dado atualizado depois ou localmente
-    // Para simplificar e garantir performance, apenas incrementamos.
-    // O listener (onSnapshot) vai atualizar a tela automaticamente.
     return { success: true };
 }
 
-// --- FUNÇÃO PARA CONTAR CARDS GERADOS ---
-export async function trackGeneration(userId, amount) {
+// --- FUNÇÃO PARA REGISTRAR ATIVIDADE ESPECÍFICA ---
+export async function trackActivity(userId, type, amount) {
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
-        "stats.cardsGeneratedMonth": increment(amount)
-    });
+    
+    // Atualiza o contador específico e o total geral
+    const updates = {
+        "stats.cardsGeneratedMonth": increment(amount) // Mantemos o total geral para o Dashboard
+    };
+
+    // Atualiza o contador específico
+    if (type === 'flashcards') updates["stats.flashcardsGen"] = increment(amount);
+    if (type === 'quiz') updates["stats.quizGen"] = increment(1); // Conta como 1 jogo
+    if (type === 'review') updates["stats.reviewGen"] = increment(1); // Conta como 1 resumo
+
+    await updateDoc(userRef, updates);
 }

@@ -79,10 +79,11 @@ if(startBtn) {
             await incrementUsage(currentUser.uid, 'quiz');
             
             // --- 3. ESTATÍSTICAS (NOVO) ---
-            if(window.recordGeneration) window.recordGeneration(1); // Conta como 1 jogo gerado
+            // Conta 1 jogo de 'quiz'
+            if(window.recordActivity) window.recordActivity('quiz', 1); // Conta como 1 jogo gerado
 
             // Sucesso
-            loadingState.style.display = 'none';
+           loadingState.style.display = 'none';
             gameActive.style.display = 'block';
             if(gameTitle) gameTitle.innerText = topic;
             if(resultTopicEl) resultTopicEl.innerText = topic;
