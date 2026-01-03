@@ -13,14 +13,14 @@ const themeToggle = document.getElementById('themeToggle');
 // --- 1. AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Verifica reset mensal
+        // Verifica Reset Mensal
         await checkMonthlyReset(user);
 
-        // Preenche o email no Modal de Configurações (SOMENTE LEITURA)
+        // Preenche E-mail no Modal (Somente Leitura)
         const emailInput = document.getElementById('settingsEmailInput');
         if(emailInput) emailInput.value = user.email;
 
-        // Listener em Tempo Real (Banco de Dados)
+        // LISTENER EM TEMPO REAL (Atualiza tudo automaticamente)
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
@@ -44,17 +44,34 @@ function updateInterface(user, dbData) {
     const displayName = dbData.displayName || user.displayName || "Estudante";
     const firstName = displayName.split(' ')[0];
 
-    // Atualiza Textos
+    // ATUALIZA TEXTOS
     document.getElementById('navUserName').innerText = firstName;
     document.getElementById('ddUserName').innerText = displayName;
-    
-    // ATUALIZA CARDS DO TOPO
-    document.getElementById('userXP').innerText = currentXP; // Card XP Total
-    document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`; // Card Mascote
-    
-    // Dropdown Infos
+    document.getElementById('userXP').innerText = currentXP;
     document.getElementById('xpText').innerText = `${currentXP} / ${levelData.limit} XP`;
     document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
+    document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
+
+    // === LÓGICA DO CARD DE REVISÃO ===
+    const stats = dbData.stats || { cardsDue: 0, cardsNew: 0 };
+    const totalDue = (stats.cardsDue || 0) + (stats.cardsNew || 0);
+    
+    const reviewCountEl = document.getElementById('reviewCount');
+    const reviewDetailsEl = document.getElementById('reviewDetails');
+    
+    if(reviewCountEl) {
+        reviewCountEl.innerText = `${totalDue} Cards`;
+        // Muda cor: Vermelho se tiver muitos (>10), Azul normal, Verde se zerado
+        if(totalDue > 10) reviewCountEl.style.color = "#FF4B4B";
+        else if(totalDue > 0) reviewCountEl.style.color = "var(--primary-blue)";
+        else reviewCountEl.style.color = "var(--accent-green)";
+    }
+    
+    if(reviewDetailsEl) {
+        // Mostra o detalhe: "X Novos • Y Revisão"
+        reviewDetailsEl.innerText = `${stats.cardsNew || 0} Novos • ${stats.cardsDue || 0} Revisão`;
+    }
+    // ==================================
 
     // Barra de Progresso
     let range = levelData.limit - levelData.min;
@@ -63,10 +80,8 @@ function updateInterface(user, dbData) {
     const bar = document.getElementById('xpBarFill');
     if(bar) bar.style.width = `${percentage}%`;
 
-    // Saudação
+    // Saudação e Mascote
     updateGreeting(firstName);
-
-    // Mascote
     updateMascotImage(currentXP);
 
     // Avatar
@@ -230,7 +245,6 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-// Tema
 themeToggle.addEventListener('click', () => {
     const html = document.documentElement;
     const current = html.getAttribute('data-theme');
@@ -251,7 +265,6 @@ function updateThemeIcons(theme) {
 if(localStorage.getItem('bitto_theme') === 'dark') updateThemeIcons('dark');
 else updateThemeIcons('light');
 
-// Dropdown
 const profileDropdown = document.getElementById('profileDropdown');
 const profileBtn = document.getElementById('profileBtn');
 if(profileBtn) {
@@ -264,7 +277,6 @@ document.addEventListener('click', () => {
     if(profileDropdown) profileDropdown.classList.remove('active'); 
 });
 
-// Chatbot UI
 function typeWriter(text, i) {
     if (i < (text.length)) {
         const target = document.getElementById("typewriterText");

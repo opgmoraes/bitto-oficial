@@ -1,7 +1,7 @@
 import { db } from './firebase-init.js';
 import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- TABELA DE NÍVEIS (Configuração) ---
+// --- TABELA DE NÍVEIS ---
 export const XP_TABLE = [
     { level: 1, min: 0, limit: 100 },
     { level: 2, min: 100, limit: 250 },
@@ -15,24 +15,20 @@ export const XP_TABLE = [
     { level: 10, min: 5800, limit: 10000 }
 ];
 
-// Calcula o nível baseado no XP
 export function calculateLevel(xp) {
     const levelData = XP_TABLE.find(l => xp < l.limit) || XP_TABLE[XP_TABLE.length - 1];
     return levelData;
 }
 
-// --- VERIFICAÇÃO MENSAL (Lógica do Plano Free) ---
+// --- VERIFICAÇÃO MENSAL (RESET) ---
 export async function checkMonthlyReset(user) {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
-    
-    // Pega o mês atual: "2024-02"
-    const currentMonth = new Date().toISOString().slice(0, 7); 
+    const currentMonth = new Date().toISOString().slice(0, 7); // Ex: "2024-02"
 
     if (snap.exists()) {
         const data = snap.data();
-        
-        // Se mudou o mês, ZERA TUDO
+        // Se mudou o mês, RESETA XP
         if (data.lastResetMonth !== currentMonth) {
             console.log("📅 Novo mês! Resetando XP...");
             await updateDoc(userRef, {
@@ -44,20 +40,26 @@ export async function checkMonthlyReset(user) {
         }
         return data.xp || 0;
     } else {
-        // Primeiro acesso: Cria o usuário no banco
+        // PRIMEIRO ACESSO: Cria usuário com estrutura completa
         await setDoc(userRef, {
             displayName: user.displayName || "Estudante",
             email: user.email,
             xp: 0,
             level: 1,
             lastResetMonth: currentMonth,
-            photoURL: user.photoURL || ""
+            photoURL: user.photoURL || "",
+            // Estrutura inicial para o Card de Revisão
+            stats: {
+                cardsTotal: 0,
+                cardsDue: 0, // Pendentes
+                cardsNew: 5  // Exemplo inicial
+            }
         }, { merge: true });
         return 0;
     }
 }
 
-// --- GANHAR XP (Para usar nos jogos) ---
+// --- FUNÇÃO PARA DAR XP ---
 export async function addUserXP(userId, amount) {
     const userRef = doc(db, "users", userId);
     const snap = await getDoc(userRef);
@@ -65,7 +67,6 @@ export async function addUserXP(userId, amount) {
     if (snap.exists()) {
         const currentXP = snap.data().xp || 0;
         const newXP = currentXP + amount;
-        
         const newLevelData = calculateLevel(newXP);
         
         await updateDoc(userRef, {
