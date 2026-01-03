@@ -4,20 +4,23 @@ import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/1
 import { db } from './firebase-init.js';
 import { checkMonthlyReset, calculateLevel } from './xpSystem.js';
 
-// --- ELEMENTOS UI ---
+// ELEMENTOS UI
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const themeToggle = document.getElementById('themeToggle');
 
-// --- 1. AUTENTICAÇÃO & INICIALIZAÇÃO ---
+// --- 1. AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Verifica reset mensal assim que loga
+        // Verifica reset mensal
         await checkMonthlyReset(user);
 
-        // LISTENER EM TEMPO REAL (Onde a mágica acontece)
-        // Sempre que o XP mudar no banco, essa função roda automaticamente
+        // Preenche o email no Modal de Configurações (SOMENTE LEITURA)
+        const emailInput = document.getElementById('settingsEmailInput');
+        if(emailInput) emailInput.value = user.email;
+
+        // Listener em Tempo Real (Banco de Dados)
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
@@ -25,73 +28,70 @@ onAuthStateChanged(auth, async (user) => {
             }
         });
 
-        // Configura botão de salvar perfil com o UID correto
         setupSettingsSave(user);
 
     } else {
-        // Se não tiver usuário, chuta pro login
         window.location.href = 'pages/login.html';
     }
 });
 
-// --- 2. ATUALIZAÇÃO DA INTERFACE (DOM) ---
+// --- 2. ATUALIZA INTERFACE ---
 function updateInterface(user, dbData) {
     const currentXP = dbData.xp || 0;
     const levelData = calculateLevel(currentXP);
     
-    // NOME: Prefere o do Banco, senão Auth, senão Padrão
+    // NOME
     const displayName = dbData.displayName || user.displayName || "Estudante";
     const firstName = displayName.split(' ')[0];
 
-    // Atualiza Textos na Tela
+    // Atualiza Textos
     document.getElementById('navUserName').innerText = firstName;
     document.getElementById('ddUserName').innerText = displayName;
-    document.getElementById('userXP').innerText = currentXP;
+    
+    // ATUALIZA CARDS DO TOPO
+    document.getElementById('userXP').innerText = currentXP; // Card XP Total
+    document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`; // Card Mascote
+    
+    // Dropdown Infos
     document.getElementById('xpText').innerText = `${currentXP} / ${levelData.limit} XP`;
     document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
-    document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
 
-    // Atualiza Saudação (Bom dia/Tarde/Noite)
-    updateGreeting(firstName);
-
-    // Atualiza Barra de Progresso
+    // Barra de Progresso
     let range = levelData.limit - levelData.min;
     let progress = currentXP - levelData.min;
-    let percentage = Math.max(0, Math.min(100, (progress / range) * 100)); // Trava entre 0 e 100
-    document.getElementById('xpBarFill').style.width = `${percentage}%`;
+    let percentage = Math.max(0, Math.min(100, (progress / range) * 100));
+    const bar = document.getElementById('xpBarFill');
+    if(bar) bar.style.width = `${percentage}%`;
 
-    // Atualiza Mascote (Evolução)
+    // Saudação
+    updateGreeting(firstName);
+
+    // Mascote
     updateMascotImage(currentXP);
 
-    // Atualiza Avatar (Se tiver)
+    // Avatar
     const photoURL = dbData.photoURL || user.photoURL;
     if (photoURL) {
-        const avatars = document.querySelectorAll('.avatar-circle, .avatar-placeholder-large');
-        avatars.forEach(el => {
+        document.querySelectorAll('.avatar-circle, .avatar-placeholder-large').forEach(el => {
             el.innerHTML = `<img src="${photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
         });
-        // Atualiza preview no modal tbm
-        const modalPreview = document.getElementById('settingsAvatarPreview');
-        const modalPlaceholder = document.getElementById('settingsAvatarPlaceholder');
-        if(modalPreview && modalPlaceholder) {
-            modalPreview.src = photoURL;
-            modalPreview.style.display = 'block';
-            modalPlaceholder.style.display = 'none';
-        }
+        const preview = document.getElementById('settingsAvatarPreview');
+        const placeholder = document.getElementById('settingsAvatarPlaceholder');
+        if(preview) { preview.src = photoURL; preview.style.display = 'block'; }
+        if(placeholder) placeholder.style.display = 'none';
     }
     
-    // Preenche input de nome no modal
-    document.getElementById('settingsNameInput').value = displayName;
+    // Nome no Modal
+    const nameInput = document.getElementById('settingsNameInput');
+    if(nameInput) nameInput.value = displayName;
 }
 
-// Lógica de Imagem do Mascote (Bittinho)
+// Lógica de Imagem do Mascote
 function updateMascotImage(xp) {
     const mascotImg = document.getElementById('mascotImage');
     if (!mascotImg) return;
 
-    let imageName = 'bittinho-0'; // Padrão
-    
-    // Faixas de XP (Sincronizado com xpSystem.js)
+    let imageName = 'bittinho-0';
     if (xp >= 5800) imageName = 'bittinho-5800'; 
     else if (xp >= 4200) imageName = 'bittinho-4200';
     else if (xp >= 3000) imageName = 'bittinho-3000';
@@ -118,16 +118,14 @@ function updateGreeting(name) {
     greetingElement.innerText = `${greeting}, ${name}! 👋`;
 }
 
-// --- 3. CONFIGURAÇÕES & PERFIL ---
-// Modal Settings
+// --- 3. CONFIGURAÇÕES ---
 const settingsModal = document.getElementById('settingsModal');
 const navConfigBtn = document.getElementById('navConfigBtn');
-const ddAccountBtn = document.getElementById('ddAccountBtn'); // Botão "Minha Conta" no dropdown
+const ddAccountBtn = document.getElementById('ddAccountBtn');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const avatarInput = document.getElementById('avatarInput');
 
-// Abrir Modal
 function openSettings() { settingsModal.classList.add('active'); }
 function closeSettings() { settingsModal.classList.remove('active'); }
 
@@ -135,7 +133,6 @@ if(navConfigBtn) navConfigBtn.addEventListener('click', (e) => { e.preventDefaul
 if(ddAccountBtn) ddAccountBtn.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
 if(closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
 
-// Preview de Avatar Local
 if(avatarInput) {
     avatarInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -153,10 +150,8 @@ if(avatarInput) {
     });
 }
 
-// Salvar Perfil no Firebase
 function setupSettingsSave(user) {
     if(saveSettingsBtn) {
-        // Remove listeners antigos para não duplicar
         const newBtn = saveSettingsBtn.cloneNode(true);
         saveSettingsBtn.parentNode.replaceChild(newBtn, saveSettingsBtn);
         
@@ -170,29 +165,16 @@ function setupSettingsSave(user) {
             newBtn.disabled = true;
 
             try {
-                // 1. Atualiza no Auth (Login)
-                await updateProfile(user, {
-                    displayName: newName,
-                    // Nota: Para salvar imagem real no Storage precisaríamos de outro código.
-                    // Aqui vamos salvar a Base64 no Firestore (limitado, mas funciona pro MVP)
-                    // ou apenas manter a URL se fosse externa.
-                });
-
-                // 2. Atualiza no Firestore (Dados Visuais)
-                const updateData = { displayName: newName };
+                await updateProfile(user, { displayName: newName });
                 
-                // Se o usuário selecionou uma imagem nova (Base64)
+                const updateData = { displayName: newName };
                 if (hasNewImage && previewSrc.startsWith('data:image')) {
-                    // ATENÇÃO: Base64 pode ser pesado. O ideal futuramente é usar Firebase Storage.
-                    // Por enquanto, salvamos no Firestore.
                     updateData.photoURL = previewSrc; 
                 }
 
                 await updateDoc(doc(db, "users", user.uid), updateData);
-                
                 showToast("Perfil atualizado!", "success");
                 closeSettings();
-
             } catch (error) {
                 console.error(error);
                 showToast("Erro ao atualizar.", "error");
@@ -227,9 +209,7 @@ if(acceptConfirmBtn) {
     });
 }
 
-// --- 5. UI GERAL (Tilt, Tema, Chat) ---
-
-// Tilt 3D
+// --- 5. UI GERAL ---
 const tiltElements = document.querySelectorAll('.tilt-element');
 document.addEventListener('mousemove', (e) => {
     if(window.innerWidth > 900) {
@@ -255,12 +235,10 @@ themeToggle.addEventListener('click', () => {
     const html = document.documentElement;
     const current = html.getAttribute('data-theme');
     const newTheme = current === 'dark' ? 'light' : 'dark';
-    
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('bitto_theme', newTheme);
     updateThemeIcons(newTheme);
 });
-
 function updateThemeIcons(theme) {
     const sun = document.querySelector('.icon-sun');
     const moon = document.querySelector('.icon-moon');
@@ -270,11 +248,10 @@ function updateThemeIcons(theme) {
         sun.style.display = 'block'; moon.style.display = 'none';
     }
 }
-// Init Tema
 if(localStorage.getItem('bitto_theme') === 'dark') updateThemeIcons('dark');
 else updateThemeIcons('light');
 
-// Dropdown Menu
+// Dropdown
 const profileDropdown = document.getElementById('profileDropdown');
 const profileBtn = document.getElementById('profileBtn');
 if(profileBtn) {
@@ -287,7 +264,7 @@ document.addEventListener('click', () => {
     if(profileDropdown) profileDropdown.classList.remove('active'); 
 });
 
-// Chatbot (Mantido Visualmente)
+// Chatbot UI
 function typeWriter(text, i) {
     if (i < (text.length)) {
         const target = document.getElementById("typewriterText");
@@ -301,10 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const welcomeMsg = "Oi! Sou o Bitto. Vamos evoluir juntos?";
     typeWriter(welcomeMsg, 0);
 });
-
-window.sendChip = (text) => { 
-    if(chatInput) { chatInput.value = text; handleSend(); }
-}
+window.sendChip = (text) => { if(chatInput) { chatInput.value = text; handleSend(); } }
 
 function handleSend() {
     const text = chatInput.value.trim();
@@ -325,26 +299,14 @@ function addMessage(text, type) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message message-${type}`;
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-    let contentHtml = '';
-    if (type === 'bot') {
-        contentHtml = `
-            <div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;">
-                <div class="header-avatar" style="width:32px; height:32px;">
-                   <img src="imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
-                </div>
-            </div>
-            <div class="message-bubble">${text}<span class="message-time">${time}</span></div>
-        `;
-    } else {
-        contentHtml = `<div class="message-bubble">${text}<span class="message-time">${time}</span></div>`;
-    }
+    let contentHtml = type === 'bot' 
+        ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${text}<span class="message-time">${time}</span></div>` 
+        : `<div class="message-bubble">${text}<span class="message-time">${time}</span></div>`;
     messageDiv.innerHTML = contentHtml;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Toast System
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
     if(!container) {

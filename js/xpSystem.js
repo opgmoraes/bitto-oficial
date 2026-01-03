@@ -2,7 +2,6 @@ import { db } from './firebase-init.js';
 import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- TABELA DE NÍVEIS (Configuração) ---
-// Define quanto XP precisa para cada nível
 export const XP_TABLE = [
     { level: 1, min: 0, limit: 100 },
     { level: 2, min: 100, limit: 250 },
@@ -16,39 +15,36 @@ export const XP_TABLE = [
     { level: 10, min: 5800, limit: 10000 }
 ];
 
-// Calcula o nível atual com base no XP total
+// Calcula o nível baseado no XP
 export function calculateLevel(xp) {
-    // Encontra o nível onde o XP atual é menor que o limite
     const levelData = XP_TABLE.find(l => xp < l.limit) || XP_TABLE[XP_TABLE.length - 1];
     return levelData;
 }
 
-// --- VERIFICAÇÃO MENSAL (O Segredo do Plano Free) ---
+// --- VERIFICAÇÃO MENSAL (Lógica do Plano Free) ---
 export async function checkMonthlyReset(user) {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
     
-    // Pega o mês atual no formato "AAAA-MM" (ex: "2024-02")
+    // Pega o mês atual: "2024-02"
     const currentMonth = new Date().toISOString().slice(0, 7); 
 
     if (snap.exists()) {
         const data = snap.data();
         
-        // Se a data salva no banco for diferente do mês atual...
+        // Se mudou o mês, ZERA TUDO
         if (data.lastResetMonth !== currentMonth) {
-            console.log("📅 Novo mês detectado! Resetando XP...");
-            
-            // ... Zera o XP e atualiza a data
+            console.log("📅 Novo mês! Resetando XP...");
             await updateDoc(userRef, {
                 xp: 0,
                 level: 1,
                 lastResetMonth: currentMonth
             });
-            return 0; // Retorna 0 pois acabou de resetar
+            return 0; 
         }
-        return data.xp || 0; // Retorna o XP atual se for o mesmo mês
+        return data.xp || 0;
     } else {
-        // Se o usuário não existe no banco (primeiro acesso), cria ele
+        // Primeiro acesso: Cria o usuário no banco
         await setDoc(userRef, {
             displayName: user.displayName || "Estudante",
             email: user.email,
@@ -61,7 +57,7 @@ export async function checkMonthlyReset(user) {
     }
 }
 
-// --- FUNÇÃO PARA GANHAR XP (Usar no Quiz/Flashcards) ---
+// --- GANHAR XP (Para usar nos jogos) ---
 export async function addUserXP(userId, amount) {
     const userRef = doc(db, "users", userId);
     const snap = await getDoc(userRef);
@@ -70,8 +66,6 @@ export async function addUserXP(userId, amount) {
         const currentXP = snap.data().xp || 0;
         const newXP = currentXP + amount;
         
-        // Calcula se subiu de nível para avisar o usuário (opcional)
-        const oldLevel = calculateLevel(currentXP).level;
         const newLevelData = calculateLevel(newXP);
         
         await updateDoc(userRef, {
@@ -79,10 +73,6 @@ export async function addUserXP(userId, amount) {
             level: newLevelData.level
         });
 
-        return { 
-            newXP, 
-            leveledUp: newLevelData.level > oldLevel,
-            newLevel: newLevelData.level 
-        };
+        return { newXP, level: newLevelData.level };
     }
 }
