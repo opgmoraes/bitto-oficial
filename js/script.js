@@ -1,118 +1,141 @@
+import { auth } from './firebase-init.js';
+import { onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from './firebase-init.js';
+import { checkMonthlyReset, calculateLevel } from './xpSystem.js';
+
+// --- ELEMENTOS UI ---
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const themeToggle = document.getElementById('themeToggle');
 
-let userXP = 1250; 
+// --- 1. AUTENTICAÇÃO & INICIALIZAÇÃO ---
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        // Verifica reset mensal assim que loga
+        await checkMonthlyReset(user);
 
-// --- TILT 3D ---
-const tiltElements = document.querySelectorAll('.tilt-element');
-document.addEventListener('mousemove', (e) => {
-    tiltElements.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        if (x >= -50 && x <= rect.width + 50 && y >= -50 && y <= rect.height + 50) {
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -3; 
-            const rotateY = ((x - centerX) / centerX) * 3;
-            el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-        } else {
-            el.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-        }
-    });
-});
+        // LISTENER EM TEMPO REAL (Onde a mágica acontece)
+        // Sempre que o XP mudar no banco, essa função roda automaticamente
+        onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
+                updateInterface(user, data);
+            }
+        });
 
-// --- TEMA ---
-themeToggle.addEventListener('click', () => {
-    const html = document.documentElement;
-    const sunIcon = document.querySelector('.icon-sun');
-    const moonIcon = document.querySelector('.icon-moon');
-    if (html.getAttribute('data-theme') === 'dark') {
-        html.setAttribute('data-theme', 'light');
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
+        // Configura botão de salvar perfil com o UID correto
+        setupSettingsSave(user);
+
     } else {
-        html.setAttribute('data-theme', 'dark');
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
+        // Se não tiver usuário, chuta pro login
+        window.location.href = 'pages/login.html';
     }
 });
 
-// --- FUNÇÃO TOAST ---
-function showToast(message, type = 'success') {
-    let container = document.getElementById('toast-container');
-    if(!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        document.body.appendChild(container);
+// --- 2. ATUALIZAÇÃO DA INTERFACE (DOM) ---
+function updateInterface(user, dbData) {
+    const currentXP = dbData.xp || 0;
+    const levelData = calculateLevel(currentXP);
+    
+    // NOME: Prefere o do Banco, senão Auth, senão Padrão
+    const displayName = dbData.displayName || user.displayName || "Estudante";
+    const firstName = displayName.split(' ')[0];
+
+    // Atualiza Textos na Tela
+    document.getElementById('navUserName').innerText = firstName;
+    document.getElementById('ddUserName').innerText = displayName;
+    document.getElementById('userXP').innerText = currentXP;
+    document.getElementById('xpText').innerText = `${currentXP} / ${levelData.limit} XP`;
+    document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
+    document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
+
+    // Atualiza Saudação (Bom dia/Tarde/Noite)
+    updateGreeting(firstName);
+
+    // Atualiza Barra de Progresso
+    let range = levelData.limit - levelData.min;
+    let progress = currentXP - levelData.min;
+    let percentage = Math.max(0, Math.min(100, (progress / range) * 100)); // Trava entre 0 e 100
+    document.getElementById('xpBarFill').style.width = `${percentage}%`;
+
+    // Atualiza Mascote (Evolução)
+    updateMascotImage(currentXP);
+
+    // Atualiza Avatar (Se tiver)
+    const photoURL = dbData.photoURL || user.photoURL;
+    if (photoURL) {
+        const avatars = document.querySelectorAll('.avatar-circle, .avatar-placeholder-large');
+        avatars.forEach(el => {
+            el.innerHTML = `<img src="${photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        });
+        // Atualiza preview no modal tbm
+        const modalPreview = document.getElementById('settingsAvatarPreview');
+        const modalPlaceholder = document.getElementById('settingsAvatarPlaceholder');
+        if(modalPreview && modalPlaceholder) {
+            modalPreview.src = photoURL;
+            modalPreview.style.display = 'block';
+            modalPlaceholder.style.display = 'none';
+        }
     }
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
     
-    let icon = '';
-    if(type === 'success') icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-    if(type === 'info') icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+    // Preenche input de nome no modal
+    document.getElementById('settingsNameInput').value = displayName;
+}
+
+// Lógica de Imagem do Mascote (Bittinho)
+function updateMascotImage(xp) {
+    const mascotImg = document.getElementById('mascotImage');
+    if (!mascotImg) return;
+
+    let imageName = 'bittinho-0'; // Padrão
     
-    toast.innerHTML = `<span>${icon}</span> ${message}`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.animation = "fadeOutToast 0.3s ease forwards";
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    // Faixas de XP (Sincronizado com xpSystem.js)
+    if (xp >= 5800) imageName = 'bittinho-5800'; 
+    else if (xp >= 4200) imageName = 'bittinho-4200';
+    else if (xp >= 3000) imageName = 'bittinho-3000';
+    else if (xp >= 2100) imageName = 'bittinho-2100';
+    else if (xp >= 1400) imageName = 'bittinho-1400';
+    else if (xp >= 900) imageName = 'bittinho-900';
+    else if (xp >= 500) imageName = 'bittinho-500';
+    else if (xp >= 250) imageName = 'bittinho-250';
+    else if (xp >= 100) imageName = 'bittinho-100';
+    
+    mascotImg.src = `bittinhos/${imageName}.png`;
 }
 
-// --- MODAL CONFIRMAÇÃO LOGOUT ---
-const confirmModal = document.getElementById('confirmModal');
-const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
-const acceptConfirmBtn = document.getElementById('acceptConfirmBtn');
+function updateGreeting(name) {
+    const hour = new Date().getHours();
+    const greetingElement = document.getElementById('greetingText');
+    if (!greetingElement) return;
 
-function handleLogout() {
-    confirmModal.classList.add('active');
+    let greeting = "Olá";
+    if (hour >= 5 && hour < 12) greeting = "Bom dia";
+    else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
+    else greeting = "Boa noite";
+    
+    greetingElement.innerText = `${greeting}, ${name}! 👋`;
 }
 
-if(cancelConfirmBtn) {
-    cancelConfirmBtn.addEventListener('click', () => {
-        confirmModal.classList.remove('active');
-    });
-}
-
-if(acceptConfirmBtn) {
-    acceptConfirmBtn.addEventListener('click', () => {
-        confirmModal.classList.remove('active');
-        localStorage.removeItem('bitto_session');
-        showToast("Desconectado com sucesso!", "info");
-        // CORREÇÃO: Entrar na pasta pages/ para achar o login
-        setTimeout(() => window.location.href = 'pages/login.html', 1000);
-    });
-}
-
-const logoutBtn = document.getElementById('logoutBtn');
-const modalLogoutBtn = document.getElementById('modalLogoutBtn');
-if(logoutBtn) logoutBtn.addEventListener('click', handleLogout);
-if(modalLogoutBtn) modalLogoutBtn.addEventListener('click', handleLogout);
-
-
-// --- MODAL SETTINGS ---
+// --- 3. CONFIGURAÇÕES & PERFIL ---
+// Modal Settings
 const settingsModal = document.getElementById('settingsModal');
 const navConfigBtn = document.getElementById('navConfigBtn');
-const ddAccountBtn = document.getElementById('ddAccountBtn');
+const ddAccountBtn = document.getElementById('ddAccountBtn'); // Botão "Minha Conta" no dropdown
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const avatarInput = document.getElementById('avatarInput');
 
-function openSettings() {
-    settingsModal.classList.add('active');
-    document.getElementById('settingsNameInput').value = document.getElementById('navUserName').innerText;
-}
+// Abrir Modal
+function openSettings() { settingsModal.classList.add('active'); }
 function closeSettings() { settingsModal.classList.remove('active'); }
 
 if(navConfigBtn) navConfigBtn.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
 if(ddAccountBtn) ddAccountBtn.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
 if(closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
-settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
 
+// Preview de Avatar Local
 if(avatarInput) {
     avatarInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -130,126 +153,157 @@ if(avatarInput) {
     });
 }
 
-if(saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', () => {
-        const newName = document.getElementById('settingsNameInput').value;
-        if (newName) {
-            document.getElementById('navUserName').innerText = newName;
-            document.getElementById('ddUserName').innerText = newName;
-        }
-        const previewSrc = document.getElementById('settingsAvatarPreview').src;
-        if (document.getElementById('settingsAvatarPreview').style.display !== 'none') {
-            const navAvatar = document.querySelector('.user-profile .avatar-circle');
-            navAvatar.innerHTML = `<img src="${previewSrc}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
-        }
-        closeSettings();
-        showToast("Perfil atualizado!", "success");
-    });
-}
+// Salvar Perfil no Firebase
+function setupSettingsSave(user) {
+    if(saveSettingsBtn) {
+        // Remove listeners antigos para não duplicar
+        const newBtn = saveSettingsBtn.cloneNode(true);
+        saveSettingsBtn.parentNode.replaceChild(newBtn, saveSettingsBtn);
+        
+        newBtn.addEventListener('click', async () => {
+            const newName = document.getElementById('settingsNameInput').value;
+            const previewSrc = document.getElementById('settingsAvatarPreview').src;
+            const hasNewImage = document.getElementById('settingsAvatarPreview').style.display !== 'none';
+            
+            const originalText = newBtn.innerText;
+            newBtn.innerText = "Salvando...";
+            newBtn.disabled = true;
 
-// --- OUTRAS FUNÇÕES (XP, CHAT, ETC) ---
-function updateGreeting() {
-    const hour = new Date().getHours();
-    const greetingElement = document.getElementById('greetingText');
-    let greeting = "Olá";
-    if (hour >= 5 && hour < 12) greeting = "Bom dia";
-    else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
-    else greeting = "Boa noite";
-    if(greetingElement) {
-        const currentName = document.getElementById('navUserName').innerText;
-        greetingElement.innerText = `${greeting}, ${currentName}! 👋`;
+            try {
+                // 1. Atualiza no Auth (Login)
+                await updateProfile(user, {
+                    displayName: newName,
+                    // Nota: Para salvar imagem real no Storage precisaríamos de outro código.
+                    // Aqui vamos salvar a Base64 no Firestore (limitado, mas funciona pro MVP)
+                    // ou apenas manter a URL se fosse externa.
+                });
+
+                // 2. Atualiza no Firestore (Dados Visuais)
+                const updateData = { displayName: newName };
+                
+                // Se o usuário selecionou uma imagem nova (Base64)
+                if (hasNewImage && previewSrc.startsWith('data:image')) {
+                    // ATENÇÃO: Base64 pode ser pesado. O ideal futuramente é usar Firebase Storage.
+                    // Por enquanto, salvamos no Firestore.
+                    updateData.photoURL = previewSrc; 
+                }
+
+                await updateDoc(doc(db, "users", user.uid), updateData);
+                
+                showToast("Perfil atualizado!", "success");
+                closeSettings();
+
+            } catch (error) {
+                console.error(error);
+                showToast("Erro ao atualizar.", "error");
+            } finally {
+                newBtn.innerText = originalText;
+                newBtn.disabled = false;
+            }
+        });
     }
 }
 
-function updateXPBar(xp) {
-    const xpLevels = [
-        { limit: 100, name: "Nível 1", min: 0 },
-        { limit: 250, name: "Nível 2", min: 100 },
-        { limit: 500, name: "Nível 3", min: 250 },
-        { limit: 900, name: "Nível 4", min: 500 },
-        { limit: 1400, name: "Nível 5", min: 900 },
-        { limit: 2100, name: "Nível 6", min: 1400 },
-        { limit: 3000, name: "Nível 7", min: 2100 },
-        { limit: 4200, name: "Nível 8", min: 3000 },
-        { limit: 5800, name: "Nível 9", min: 4200 },
-        { limit: 8000, name: "Nível 10", min: 5800 }
-    ];
-    let currentLevel = xpLevels.find(l => xp < l.limit) || xpLevels[xpLevels.length - 1];
-    let range = currentLevel.limit - currentLevel.min;
-    let progress = xp - currentLevel.min;
-    let percentage = (progress / range) * 100;
-    document.getElementById('ddLevel').innerText = currentLevel.name;
-    document.getElementById('xpText').innerText = `${xp} / ${currentLevel.limit} XP`;
-    document.getElementById('xpBarFill').style.width = `${percentage}%`;
+// --- 4. LOGOUT ---
+const logoutBtn = document.getElementById('logoutBtn');
+const modalLogoutBtn = document.getElementById('modalLogoutBtn');
+const confirmModal = document.getElementById('confirmModal');
+const acceptConfirmBtn = document.getElementById('acceptConfirmBtn');
+const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+
+function openLogoutModal(e) { 
+    if(e) e.preventDefault();
+    confirmModal.classList.add('active'); 
 }
 
-function updateMascot(xp) {
-    const mascotImg = document.getElementById('mascotImage');
-    const levelText = document.getElementById('mascotLevelText');
-    const xpDisplay = document.getElementById('userXP');
-    let imageName = 'bittinho-0'; 
-    let levelName = "Nível 1";
-    if (xp >= 5800) { imageName = 'bittinho-5800'; levelName = "Nível 10"; }
-    else if (xp >= 4200) { imageName = 'bittinho-4200'; levelName = "Nível 9"; }
-    else if (xp >= 3000) { imageName = 'bittinho-3000'; levelName = "Nível 8"; }
-    else if (xp >= 2100) { imageName = 'bittinho-2100'; levelName = "Nível 7"; }
-    else if (xp >= 1400) { imageName = 'bittinho-1400'; levelName = "Nível 6"; }
-    else if (xp >= 900) { imageName = 'bittinho-900'; levelName = "Nível 5"; }
-    else if (xp >= 500) { imageName = 'bittinho-500'; levelName = "Nível 4"; }
-    else if (xp >= 250) { imageName = 'bittinho-250'; levelName = "Nível 3"; }
-    else if (xp >= 100) { imageName = 'bittinho-100'; levelName = "Nível 2"; }
-    if(mascotImg) mascotImg.src = `bittinhos/${imageName}.png`;
-    if(levelText) levelText.innerText = levelName;
-    if(xpDisplay) xpDisplay.innerText = xp;
+if(logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
+if(modalLogoutBtn) modalLogoutBtn.addEventListener('click', openLogoutModal);
+if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', () => confirmModal.classList.remove('active'));
+
+if(acceptConfirmBtn) {
+    acceptConfirmBtn.addEventListener('click', async () => {
+        await signOut(auth);
+        window.location.href = 'pages/login.html';
+    });
 }
 
-function typeWriter(text, i, fnCallback) {
+// --- 5. UI GERAL (Tilt, Tema, Chat) ---
+
+// Tilt 3D
+const tiltElements = document.querySelectorAll('.tilt-element');
+document.addEventListener('mousemove', (e) => {
+    if(window.innerWidth > 900) {
+        tiltElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (x >= -50 && x <= rect.width + 50 && y >= -50 && y <= rect.height + 50) {
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -3; 
+                const rotateY = ((x - centerX) / centerX) * 3;
+                el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            } else {
+                el.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            }
+        });
+    }
+});
+
+// Tema
+themeToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const newTheme = current === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('bitto_theme', newTheme);
+    updateThemeIcons(newTheme);
+});
+
+function updateThemeIcons(theme) {
+    const sun = document.querySelector('.icon-sun');
+    const moon = document.querySelector('.icon-moon');
+    if(theme === 'dark') {
+        sun.style.display = 'none'; moon.style.display = 'block';
+    } else {
+        sun.style.display = 'block'; moon.style.display = 'none';
+    }
+}
+// Init Tema
+if(localStorage.getItem('bitto_theme') === 'dark') updateThemeIcons('dark');
+else updateThemeIcons('light');
+
+// Dropdown Menu
+const profileDropdown = document.getElementById('profileDropdown');
+const profileBtn = document.getElementById('profileBtn');
+if(profileBtn) {
+    profileBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        profileDropdown.classList.toggle('active'); 
+    });
+}
+document.addEventListener('click', () => { 
+    if(profileDropdown) profileDropdown.classList.remove('active'); 
+});
+
+// Chatbot (Mantido Visualmente)
+function typeWriter(text, i) {
     if (i < (text.length)) {
         const target = document.getElementById("typewriterText");
         if(target) {
             target.innerHTML = text.substring(0, i+1);
-            setTimeout(function() { typeWriter(text, i + 1, fnCallback) }, 30);
+            setTimeout(function() { typeWriter(text, i + 1) }, 30);
         }
     }
 }
-
-const profileDropdown = document.getElementById('profileDropdown');
-const profileBtn = document.getElementById('profileBtn');
-profileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
-document.addEventListener('click', () => { profileDropdown.classList.remove('active'); });
-
 document.addEventListener('DOMContentLoaded', () => {
-    updateMascot(userXP);
-    updateXPBar(userXP);
-    updateGreeting();
-    const welcomeMsg = "Oi! Sou o Bitto. Quanto mais estudamos, mais eu evoluo! O que vamos ver hoje?";
+    const welcomeMsg = "Oi! Sou o Bitto. Vamos evoluir juntos?";
     typeWriter(welcomeMsg, 0);
 });
 
-function getCurrentTime() { return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
-
-function addMessage(text, type) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message message-${type}`;
-    let contentHtml = '';
-    if (type === 'bot') {
-        contentHtml = `
-            <div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;">
-                <div class="header-avatar" style="width:32px; height:32px;">
-                   <img src="imagens/bittochat.png" alt="Bitto" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
-                </div>
-            </div>
-            <div class="message-bubble">
-                ${text}
-                <span class="message-time">${getCurrentTime()}</span>
-            </div>
-        `;
-    } else {
-        contentHtml = `<div class="message-bubble">${text}<span class="message-time">${getCurrentTime()}</span></div>`;
-    }
-    messageDiv.innerHTML = contentHtml;
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+window.sendChip = (text) => { 
+    if(chatInput) { chatInput.value = text; handleSend(); }
 }
 
 function handleSend() {
@@ -258,17 +312,50 @@ function handleSend() {
         addMessage(text, 'user');
         chatInput.value = '';
         setTimeout(() => {
-            const random = Math.random();
-            let msg = "Analisando...";
-            if(random > 0.6) msg = "Entendi! Vou adicionar isso aos seus flashcards.";
-            else if(random > 0.3) msg = "Isso faz sentido. Quer criar um resumo?";
-            else msg = "Interessante... Me conte mais sobre isso.";
-            addMessage(msg, 'bot');
-        }, 800);
+            const msgs = ["Interessante!", "Vou anotar isso.", "Continue assim!", "Foco nos estudos!"];
+            const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+            addMessage(randomMsg, 'bot');
+        }, 1000);
     }
 }
+if(sendBtn) sendBtn.addEventListener('click', handleSend);
+if(chatInput) chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 
-function sendChip(text) { chatInput.value = text; handleSend(); }
+function addMessage(text, type) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${type}`;
+    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    let contentHtml = '';
+    if (type === 'bot') {
+        contentHtml = `
+            <div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;">
+                <div class="header-avatar" style="width:32px; height:32px;">
+                   <img src="imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                </div>
+            </div>
+            <div class="message-bubble">${text}<span class="message-time">${time}</span></div>
+        `;
+    } else {
+        contentHtml = `<div class="message-bubble">${text}<span class="message-time">${time}</span></div>`;
+    }
+    messageDiv.innerHTML = contentHtml;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 
-sendBtn.addEventListener('click', handleSend);
-chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+// Toast System
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toast-container');
+    if(!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    let icon = type==='success'?'✅':(type==='error'?'❌':'ℹ️');
+    toast.innerHTML = `<span>${icon}</span> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove() }, 3000);
+}
