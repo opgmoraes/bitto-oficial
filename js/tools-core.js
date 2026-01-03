@@ -1,66 +1,62 @@
-// ARQUIVO: js/tools-core.js
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { addUserXP } from './xpSystem.js';
+import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { addUserXP, trackGeneration } from './xpSystem.js';
 
 // ELEMENTOS DA UI (Navbar)
-// Certifique-se que suas páginas de ferramentas tem esses IDs/Classes
 const navName = document.getElementById('navUserName');
-const navAvatar = document.querySelector('.avatar-circle'); // Se tiver mais de um, usa querySelectorAll
-const toastContainer = document.getElementById('toast-container');
+const navAvatar = document.querySelector('.avatar-circle');
 
-// --- 1. AUTENTICAÇÃO E PERFIL ---
-onAuthStateChanged(auth, async (user) => {
+// --- 1. AUTENTICAÇÃO E REAL-TIME ---
+onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Carrega dados do usuário
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-
-        if (snap.exists()) {
-            const data = snap.data();
-            updateToolHeader(user, data);
-        }
+        // Listener em Tempo Real (Para garantir que dados estão frescos)
+        onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
+                updateToolHeader(user, data);
+            }
+        });
     } else {
-        // Se não estiver logado, manda pro login
-        window.location.href = 'login.html';
+        window.location.href = '../pages/login.html'; // Ajuste o caminho conforme necessidade
     }
 });
 
-// Atualiza o Topo da Página (Foto e Nome)
 function updateToolHeader(user, dbData) {
     const displayName = dbData.displayName || user.displayName || "Estudante";
     const firstName = displayName.split(' ')[0];
     const photoURL = dbData.photoURL || user.photoURL;
 
-    // Atualiza Nome
     if (navName) navName.innerText = firstName;
-
-    // Atualiza Foto
     if (photoURL && navAvatar) {
         navAvatar.innerHTML = `<img src="${photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
     }
 }
 
 // --- 2. SISTEMA DE GANHAR XP (Global) ---
-// Use essa função dentro dos seus jogos: window.awardXP(10, 'Quiz')
 window.awardXP = async (amount, source = "Atividade") => {
     const user = auth.currentUser;
     if (!user) return;
-
     try {
-        const result = await addUserXP(user.uid, amount, source);
-        
-        // Mostra o Toast de Sucesso
-        showToolToast(`+${amount} XP! ${result.leveledUp ? 'SUBIU DE NÍVEL! 🆙' : ''}`, 'success');
-        
-        // Se quiser tocar um som, pode por aqui
+        await addUserXP(user.uid, amount);
+        showToolToast(`+${amount} XP! 🚀`, 'success');
     } catch (error) {
-        console.error("Erro ao dar XP:", error);
+        console.error("Erro XP:", error);
     }
 };
 
-// --- 3. TOAST (Notificação Visual) ---
+// --- 3. SISTEMA DE CONTAR CARDS GERADOS ---
+window.recordGeneration = async (amount) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        await trackGeneration(user.uid, amount);
+    } catch (error) {
+        console.error("Erro Generation:", error);
+    }
+};
+
+// --- 4. TOAST ---
 function showToolToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
     if(!container) {
@@ -70,7 +66,6 @@ function showToolToast(message, type = 'success') {
     }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    // Estilos inline básicos caso o CSS não carregue
     toast.style.cssText = `
         background: white; color: #111; padding: 12px 20px; border-radius: 8px; 
         box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-top: 10px; display: flex; 
@@ -78,8 +73,7 @@ function showToolToast(message, type = 'success') {
         border-left: 4px solid ${type === 'success' ? '#CCFF00' : 'red'};
         animation: slideIn 0.3s ease;
     `;
-    
-    toast.innerHTML = `<span>${type==='success'?'🚀':'⚠️'}</span> ${message}`;
+    toast.innerHTML = `<span>${type==='success'?'✨':'⚠️'}</span> ${message}`;
     container.appendChild(toast);
     setTimeout(() => { toast.remove() }, 3000);
 }

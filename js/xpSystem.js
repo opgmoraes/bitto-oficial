@@ -1,5 +1,5 @@
 import { db } from './firebase-init.js';
-import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- TABELA DE NÍVEIS ---
 export const XP_TABLE = [
@@ -24,23 +24,25 @@ export function calculateLevel(xp) {
 export async function checkMonthlyReset(user) {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
-    const currentMonth = new Date().toISOString().slice(0, 7); // Ex: "2024-02"
+    const currentMonth = new Date().toISOString().slice(0, 7); // Ex: "2026-01"
 
     if (snap.exists()) {
         const data = snap.data();
-        // Se mudou o mês, RESETA XP
+        
+        // Se mudou o mês, ZERA XP e CARDS GERADOS
         if (data.lastResetMonth !== currentMonth) {
-            console.log("📅 Novo mês! Resetando XP...");
+            console.log("📅 Novo mês! Resetando estatísticas...");
             await updateDoc(userRef, {
                 xp: 0,
                 level: 1,
-                lastResetMonth: currentMonth
+                lastResetMonth: currentMonth,
+                "stats.cardsGeneratedMonth": 0 // Zera contagem mensal
             });
             return 0; 
         }
         return data.xp || 0;
     } else {
-        // PRIMEIRO ACESSO: Cria usuário com estrutura completa
+        // PRIMEIRO ACESSO
         await setDoc(userRef, {
             displayName: user.displayName || "Estudante",
             email: user.email,
@@ -48,11 +50,8 @@ export async function checkMonthlyReset(user) {
             level: 1,
             lastResetMonth: currentMonth,
             photoURL: user.photoURL || "",
-            // Estrutura inicial para o Card de Revisão
             stats: {
-                cardsTotal: 0,
-                cardsDue: 0, // Pendentes
-                cardsNew: 5  // Exemplo inicial
+                cardsGeneratedMonth: 0 // Começa com 0
             }
         }, { merge: true });
         return 0;
@@ -62,18 +61,21 @@ export async function checkMonthlyReset(user) {
 // --- FUNÇÃO PARA DAR XP ---
 export async function addUserXP(userId, amount) {
     const userRef = doc(db, "users", userId);
-    const snap = await getDoc(userRef);
+    // Usamos 'increment' do Firestore para garantir que o valor suba mesmo com conexões instáveis
+    await updateDoc(userRef, {
+        xp: increment(amount)
+    });
     
-    if (snap.exists()) {
-        const currentXP = snap.data().xp || 0;
-        const newXP = currentXP + amount;
-        const newLevelData = calculateLevel(newXP);
-        
-        await updateDoc(userRef, {
-            xp: newXP,
-            level: newLevelData.level
-        });
+    // Verificação de nível fazemos lendo o dado atualizado depois ou localmente
+    // Para simplificar e garantir performance, apenas incrementamos.
+    // O listener (onSnapshot) vai atualizar a tela automaticamente.
+    return { success: true };
+}
 
-        return { newXP, level: newLevelData.level };
-    }
+// --- FUNÇÃO PARA CONTAR CARDS GERADOS ---
+export async function trackGeneration(userId, amount) {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+        "stats.cardsGeneratedMonth": increment(amount)
+    });
 }

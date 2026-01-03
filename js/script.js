@@ -13,18 +13,15 @@ const themeToggle = document.getElementById('themeToggle');
 // --- 1. AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Verifica Reset Mensal
         await checkMonthlyReset(user);
 
-        // Preenche E-mail no Modal (Somente Leitura)
         const emailInput = document.getElementById('settingsEmailInput');
         if(emailInput) emailInput.value = user.email;
 
-        // LISTENER EM TEMPO REAL (Atualiza tudo automaticamente)
+        // LISTENER REAL-TIME (Isso garante que o XP atualize na hora)
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
-                const data = docSnapshot.data();
-                updateInterface(user, data);
+                updateInterface(user, docSnapshot.data());
             }
         });
 
@@ -39,39 +36,35 @@ onAuthStateChanged(auth, async (user) => {
 function updateInterface(user, dbData) {
     const currentXP = dbData.xp || 0;
     const levelData = calculateLevel(currentXP);
-    
-    // NOME
     const displayName = dbData.displayName || user.displayName || "Estudante";
     const firstName = displayName.split(' ')[0];
 
-    // ATUALIZA TEXTOS
+    // ATUALIZA TEXTOS GERAIS
     document.getElementById('navUserName').innerText = firstName;
     document.getElementById('ddUserName').innerText = displayName;
-    document.getElementById('userXP').innerText = currentXP;
+    document.getElementById('userXP').innerText = currentXP; // XP TOTAL
     document.getElementById('xpText').innerText = `${currentXP} / ${levelData.limit} XP`;
     document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
     document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
 
-    // === LÓGICA DO CARD DE REVISÃO ===
-    const stats = dbData.stats || { cardsDue: 0, cardsNew: 0 };
-    const totalDue = (stats.cardsDue || 0) + (stats.cardsNew || 0);
+    // === LÓGICA DO CARD "CARDS GERADOS" (ATUALIZADO) ===
+    const stats = dbData.stats || {};
+    const generatedCount = stats.cardsGeneratedMonth || 0;
     
-    const reviewCountEl = document.getElementById('reviewCount');
-    const reviewDetailsEl = document.getElementById('reviewDetails');
+    const generatedCountEl = document.getElementById('generatedCount');
+    const generatedDetailsEl = document.getElementById('generatedDetails');
     
-    if(reviewCountEl) {
-        reviewCountEl.innerText = `${totalDue} Cards`;
-        // Muda cor: Vermelho se tiver muitos (>10), Azul normal, Verde se zerado
-        if(totalDue > 10) reviewCountEl.style.color = "#FF4B4B";
-        else if(totalDue > 0) reviewCountEl.style.color = "var(--primary-blue)";
-        else reviewCountEl.style.color = "var(--accent-green)";
+    if(generatedCountEl) {
+        generatedCountEl.innerText = `${generatedCount} Cards`;
+        // Muda cor visualmente conforme progridem
+        if(generatedCount > 50) generatedCountEl.style.color = "var(--accent-green)"; // Muito bom
+        else generatedCountEl.style.color = "var(--primary-blue)"; // Normal
     }
     
-    if(reviewDetailsEl) {
-        // Mostra o detalhe: "X Novos • Y Revisão"
-        reviewDetailsEl.innerText = `${stats.cardsNew || 0} Novos • ${stats.cardsDue || 0} Revisão`;
+    if(generatedDetailsEl) {
+        generatedDetailsEl.innerText = "Criados este mês";
     }
-    // ==================================
+    // ====================================================
 
     // Barra de Progresso
     let range = levelData.limit - levelData.min;
@@ -80,7 +73,6 @@ function updateInterface(user, dbData) {
     const bar = document.getElementById('xpBarFill');
     if(bar) bar.style.width = `${percentage}%`;
 
-    // Saudação e Mascote
     updateGreeting(firstName);
     updateMascotImage(currentXP);
 
@@ -96,16 +88,16 @@ function updateInterface(user, dbData) {
         if(placeholder) placeholder.style.display = 'none';
     }
     
-    // Nome no Modal
     const nameInput = document.getElementById('settingsNameInput');
     if(nameInput) nameInput.value = displayName;
 }
 
-// Lógica de Imagem do Mascote
+// ... (Resto do código de Mascote, Greeting, Settings, Logout e UI permanece igual) ...
+// Vou incluir apenas as funções auxiliares essenciais para não cortar o código
+
 function updateMascotImage(xp) {
     const mascotImg = document.getElementById('mascotImage');
     if (!mascotImg) return;
-
     let imageName = 'bittinho-0';
     if (xp >= 5800) imageName = 'bittinho-5800'; 
     else if (xp >= 4200) imageName = 'bittinho-4200';
@@ -116,24 +108,22 @@ function updateMascotImage(xp) {
     else if (xp >= 500) imageName = 'bittinho-500';
     else if (xp >= 250) imageName = 'bittinho-250';
     else if (xp >= 100) imageName = 'bittinho-100';
-    
     mascotImg.src = `bittinhos/${imageName}.png`;
 }
 
 function updateGreeting(name) {
     const hour = new Date().getHours();
     const greetingElement = document.getElementById('greetingText');
-    if (!greetingElement) return;
-
-    let greeting = "Olá";
-    if (hour >= 5 && hour < 12) greeting = "Bom dia";
-    else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
-    else greeting = "Boa noite";
-    
-    greetingElement.innerText = `${greeting}, ${name}! 👋`;
+    if (greetingElement) {
+        let greeting = "Olá";
+        if (hour >= 5 && hour < 12) greeting = "Bom dia";
+        else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
+        else greeting = "Boa noite";
+        greetingElement.innerText = `${greeting}, ${name}! 👋`;
+    }
 }
 
-// --- 3. CONFIGURAÇÕES ---
+// Configurações e Logout
 const settingsModal = document.getElementById('settingsModal');
 const navConfigBtn = document.getElementById('navConfigBtn');
 const ddAccountBtn = document.getElementById('ddAccountBtn');
@@ -169,24 +159,17 @@ function setupSettingsSave(user) {
     if(saveSettingsBtn) {
         const newBtn = saveSettingsBtn.cloneNode(true);
         saveSettingsBtn.parentNode.replaceChild(newBtn, saveSettingsBtn);
-        
         newBtn.addEventListener('click', async () => {
             const newName = document.getElementById('settingsNameInput').value;
             const previewSrc = document.getElementById('settingsAvatarPreview').src;
             const hasNewImage = document.getElementById('settingsAvatarPreview').style.display !== 'none';
-            
             const originalText = newBtn.innerText;
             newBtn.innerText = "Salvando...";
             newBtn.disabled = true;
-
             try {
                 await updateProfile(user, { displayName: newName });
-                
                 const updateData = { displayName: newName };
-                if (hasNewImage && previewSrc.startsWith('data:image')) {
-                    updateData.photoURL = previewSrc; 
-                }
-
+                if (hasNewImage && previewSrc.startsWith('data:image')) updateData.photoURL = previewSrc; 
                 await updateDoc(doc(db, "users", user.uid), updateData);
                 showToast("Perfil atualizado!", "success");
                 closeSettings();
@@ -201,30 +184,19 @@ function setupSettingsSave(user) {
     }
 }
 
-// --- 4. LOGOUT ---
 const logoutBtn = document.getElementById('logoutBtn');
 const modalLogoutBtn = document.getElementById('modalLogoutBtn');
 const confirmModal = document.getElementById('confirmModal');
 const acceptConfirmBtn = document.getElementById('acceptConfirmBtn');
 const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
 
-function openLogoutModal(e) { 
-    if(e) e.preventDefault();
-    confirmModal.classList.add('active'); 
-}
-
+function openLogoutModal(e) { if(e) e.preventDefault(); confirmModal.classList.add('active'); }
 if(logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
 if(modalLogoutBtn) modalLogoutBtn.addEventListener('click', openLogoutModal);
 if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', () => confirmModal.classList.remove('active'));
+if(acceptConfirmBtn) acceptConfirmBtn.addEventListener('click', async () => { await signOut(auth); window.location.href = 'pages/login.html'; });
 
-if(acceptConfirmBtn) {
-    acceptConfirmBtn.addEventListener('click', async () => {
-        await signOut(auth);
-        window.location.href = 'pages/login.html';
-    });
-}
-
-// --- 5. UI GERAL ---
+// UI Tilt e Tema
 const tiltElements = document.querySelectorAll('.tilt-element');
 document.addEventListener('mousemove', (e) => {
     if(window.innerWidth > 900) {
@@ -256,26 +228,16 @@ themeToggle.addEventListener('click', () => {
 function updateThemeIcons(theme) {
     const sun = document.querySelector('.icon-sun');
     const moon = document.querySelector('.icon-moon');
-    if(theme === 'dark') {
-        sun.style.display = 'none'; moon.style.display = 'block';
-    } else {
-        sun.style.display = 'block'; moon.style.display = 'none';
-    }
+    if(theme === 'dark') { sun.style.display = 'none'; moon.style.display = 'block'; } 
+    else { sun.style.display = 'block'; moon.style.display = 'none'; }
 }
 if(localStorage.getItem('bitto_theme') === 'dark') updateThemeIcons('dark');
 else updateThemeIcons('light');
 
 const profileDropdown = document.getElementById('profileDropdown');
 const profileBtn = document.getElementById('profileBtn');
-if(profileBtn) {
-    profileBtn.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        profileDropdown.classList.toggle('active'); 
-    });
-}
-document.addEventListener('click', () => { 
-    if(profileDropdown) profileDropdown.classList.remove('active'); 
-});
+if(profileBtn) profileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
+document.addEventListener('click', () => { if(profileDropdown) profileDropdown.classList.remove('active'); });
 
 function typeWriter(text, i) {
     if (i < (text.length)) {
@@ -286,12 +248,8 @@ function typeWriter(text, i) {
         }
     }
 }
-document.addEventListener('DOMContentLoaded', () => {
-    const welcomeMsg = "Oi! Sou o Bitto. Vamos evoluir juntos?";
-    typeWriter(welcomeMsg, 0);
-});
+document.addEventListener('DOMContentLoaded', () => { typeWriter("Oi! Sou o Bitto. Vamos evoluir juntos?", 0); });
 window.sendChip = (text) => { if(chatInput) { chatInput.value = text; handleSend(); } }
-
 function handleSend() {
     const text = chatInput.value.trim();
     if (text) {
@@ -299,8 +257,7 @@ function handleSend() {
         chatInput.value = '';
         setTimeout(() => {
             const msgs = ["Interessante!", "Vou anotar isso.", "Continue assim!", "Foco nos estudos!"];
-            const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
-            addMessage(randomMsg, 'bot');
+            addMessage(msgs[Math.floor(Math.random() * msgs.length)], 'bot');
         }, 1000);
     }
 }
@@ -318,14 +275,9 @@ function addMessage(text, type) {
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
-    if(!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        document.body.appendChild(container);
-    }
+    if(!container) { container = document.createElement('div'); container.id = 'toast-container'; document.body.appendChild(container); }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     let icon = type==='success'?'✅':(type==='error'?'❌':'ℹ️');
