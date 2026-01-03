@@ -12,26 +12,40 @@
     <link rel="stylesheet" href="../css/styles.css">
     
     <style>
-        /* ESTILOS EXCLUSIVOS DA PÁGINA DE HISTÓRICO */
-        
-        /* Cabeçalho do Mês com Gradiente Animado */
+        /* --- ESTILO DO BOTÃO VOLTAR (Igual ao Quiz/Flashcards) --- */
+        .nav-grid {
+            display: flex; justify-content: space-between; align-items: center; width: 100%;
+        }
+        .back-pill {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--input-bg);
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .back-pill:hover {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transform: translateX(-3px);
+            border-color: var(--border-color);
+        }
+        .back-pill .icon { font-size: 1.1rem; line-height: 0; padding-bottom: 2px; }
+
+        /* --- ESTILOS DO HISTÓRICO --- */
         .month-header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            padding: 3rem 2rem;
+            text-align: center; margin-bottom: 2.5rem; padding: 3rem 2rem;
             background: linear-gradient(135deg, #0035FF 0%, #0020A0 100%);
-            border-radius: 24px;
-            color: white;
-            position: relative;
-            overflow: hidden;
+            border-radius: 24px; color: white; position: relative; overflow: hidden;
             box-shadow: 0 10px 40px rgba(0, 53, 255, 0.3);
         }
-        
         .month-header::before {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
             animation: rotateBg 20s linear infinite;
         }
@@ -41,99 +55,51 @@
         .month-title { font-size: 2.2rem; margin-bottom: 0.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .month-desc { opacity: 0.9; font-size: 1rem; max-width: 600px; margin: 0 auto; }
 
-        /* Barra de Tempo Restante */
         .time-wrapper {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(5px);
-            border-radius: 50px;
-            padding: 5px;
-            margin: 20px auto 0;
-            max-width: 400px;
-            position: relative;
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+            border-radius: 50px; padding: 5px; margin: 20px auto 0; max-width: 400px;
         }
         .time-bar {
-            height: 8px;
-            background: #CCFF00;
-            border-radius: 50px;
-            width: 0%; /* JS vai preencher */
-            transition: width 1s ease;
-            box-shadow: 0 0 15px rgba(204, 255, 0, 0.6);
+            height: 8px; background: #CCFF00; border-radius: 50px; width: 0%;
+            transition: width 1s ease; box-shadow: 0 0 15px rgba(204, 255, 0, 0.6);
         }
         .time-text { font-size: 0.8rem; margin-top: 8px; font-weight: 600; color: #CCFF00; }
 
-        /* Grid Principal */
-        .history-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
 
-        /* Cartões de Estatística */
         .stat-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 1.5rem;
-            position: relative;
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 220px;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 1.5rem; position: relative;
+            transition: transform 0.3s, box-shadow 0.3s; display: flex;
+            flex-direction: column; justify-content: space-between; min-height: 220px;
         }
-        .stat-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
-            border-color: var(--primary-blue);
-        }
+        .stat-box:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); border-color: var(--primary-blue); }
 
-        /* Ícones e Cores */
         .icon-bg {
-            width: 50px; height: 50px;
-            border-radius: 14px;
+            width: 50px; height: 50px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem; margin-bottom: 1rem;
         }
         .theme-blue .icon-bg { background: rgba(0, 53, 255, 0.1); color: #0035FF; }
         .theme-green .icon-bg { background: rgba(0, 184, 132, 0.1); color: #00B884; }
         .theme-purple .icon-bg { background: rgba(138, 43, 226, 0.1); color: blueviolet; }
         .theme-gold .icon-bg { background: rgba(255, 215, 0, 0.15); color: #D4AF37; }
 
-        /* Tipografia dos Cards */
         .stat-number { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--text-main); line-height: 1; }
         .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
         .stat-sub { font-size: 0.8rem; color: var(--text-muted); opacity: 0.8; }
 
-        /* Botão de Ação Rápida (no hover ou fixo) */
         .quick-action {
-            margin-top: 1.5rem;
-            padding: 0.8rem;
-            border-radius: 12px;
-            background: var(--input-bg);
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-align: center;
-            transition: 0.2s;
+            margin-top: 1.5rem; padding: 0.8rem; border-radius: 12px;
+            background: var(--input-bg); color: var(--text-main); text-decoration: none;
+            font-weight: 600; font-size: 0.9rem; text-align: center; transition: 0.2s;
             border: 1px solid transparent;
         }
-        .quick-action:hover {
-            background: var(--text-main);
-            color: var(--card-bg);
-        }
-        .theme-blue .quick-action:hover { background: #0035FF; color: white; }
-        .theme-green .quick-action:hover { background: #00B884; color: white; }
-        .theme-purple .quick-action:hover { background: blueviolet; color: white; }
-
-        /* Totalizador */
+        .quick-action:hover { background: var(--text-main); color: var(--card-bg); }
+        
         .total-card {
-            grid-column: 1 / -1;
-            background: var(--card-bg);
-            border: 2px solid var(--accent-green);
-            flex-direction: row;
-            align-items: center;
+            grid-column: 1 / -1; background: var(--card-bg);
+            border: 2px solid var(--accent-green); flex-direction: row; align-items: center;
             min-height: 120px;
         }
         .total-info { flex: 1; }
@@ -156,9 +122,11 @@
                     <span class="icon">←</span> Voltar
                 </a>
             </div>
+            
             <div class="nav-center">
                 <span class="page-title">HISTÓRICO</span>
             </div>
+            
             <div class="nav-right">
                 <button class="icon-button" id="themeToggle">
                     <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -177,7 +145,7 @@
         <div class="month-header tilt-element">
             <div class="header-content">
                 <h1 class="month-title" id="currentMonthDisplay">Carregando...</h1>
-                <p class="month-desc">Este é o resumo da sua produção. Mantenha o ritmo para dominar o conteúdo!</p>
+                <p class="month-desc">Seu desempenho é resetado todo dia 1º para manter o foco.</p>
                 
                 <div class="time-wrapper">
                     <div class="time-bar" id="monthProgressBar"></div>
