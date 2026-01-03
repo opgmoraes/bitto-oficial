@@ -34,7 +34,7 @@ if(generateBtn) {
 
         if(!currentUser) return;
 
-        // 1. LIMIT CHECK
+        // 1. LIMIT CHECK (Plano)
         const canUse = await checkUsageLimit(currentUser.uid, 'review');
         if (!canUse) {
             showToast('🔒 Limite mensal atingido (2/2).', 'error');
@@ -81,8 +81,12 @@ if(generateBtn) {
                 reviewOutput.innerHTML = `<pre style="white-space: pre-wrap;">${aiResponse}</pre>`;
             }
             
-            // 2. INCREMENT
+            // 2. INCREMENT LIMIT (Plano)
             await incrementUsage(currentUser.uid, 'review');
+            
+            // --- 3. XP E ESTATÍSTICAS (NOVO) ---
+            if(window.recordGeneration) window.recordGeneration(1); // Conta geração
+            if(window.awardXP) window.awardXP(20, 'Resumo IA'); // Ganha XP
 
             // UI Sucesso
             if(emptyState) emptyState.style.display = 'none';
@@ -104,12 +108,10 @@ if(generateBtn) {
     });
 }
 
-// --- UTILS (PDF, COPY, THEME - MANTIDOS IGUAIS) ---
+// --- UTILS ---
 if(downloadPdfBtn) {
     downloadPdfBtn.addEventListener('click', () => {
         if (typeof html2pdf === 'undefined') { alert("Erro: Lib html2pdf não carregada."); return; }
-        // ... (Mantendo código PDF original para economizar espaço visual, ele não muda) ...
-        // Replicar a função original de PDF aqui
         const element = document.getElementById('reviewOutput');
         const opt = { margin: 10, filename: 'Bitto_Resumo.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         html2pdf().set(opt).from(element).save();

@@ -32,7 +32,6 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
     } else {
-        // Salva a URL atual para voltar depois do login (opcional)
         window.location.href = 'login.html';
     }
 });
@@ -54,7 +53,7 @@ if(startBtn) {
             return;
         }
 
-        // 1. CHECK LIMIT
+        // 1. CHECK LIMIT (Plano)
         const canUse = await checkUsageLimit(currentUser.uid, 'quiz');
         if (!canUse) {
             showToast('🔒 Limite mensal de Quizzes atingido (2/2).', 'error');
@@ -76,8 +75,11 @@ if(startBtn) {
         try {
             await fetchQuestions(topic, difficulty);
             
-            // 2. INCREMENT USAGE (Só conta se deu certo o fetch)
+            // 2. INCREMENT USAGE (Plano)
             await incrementUsage(currentUser.uid, 'quiz');
+            
+            // --- 3. ESTATÍSTICAS (NOVO) ---
+            if(window.recordGeneration) window.recordGeneration(1); // Conta como 1 jogo gerado
 
             // Sucesso
             loadingState.style.display = 'none';
@@ -114,7 +116,6 @@ async function fetchQuestions(topic, difficulty) {
         Regras: JSON PURO. Português.
     `;
 
-    // Fetch para a API Vercel
     const response = await fetch('../api/generate', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,12 +131,11 @@ async function fetchQuestions(topic, difficulty) {
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if(!rawText) throw new Error("Resposta vazia.");
 
-    // Limpeza do JSON (Remove markdown se houver)
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
     questions = JSON.parse(rawText);
 }
 
-// --- LÓGICA DO JOGO (MANTIDA) ---
+// --- LÓGICA DO JOGO ---
 function setupProgressSteps() {
     progressSteps.innerHTML = '';
     for(let i=0; i<TOTAL_QUESTIONS; i++) {
@@ -180,8 +180,12 @@ function checkAnswer(selectedIdx, btnElement) {
     const isCorrect = (selectedIdx === correctIdx);
     if (isCorrect) {
         btnElement.classList.add('correct');
-        score += 100;
+        score += 10; // Pontuação do jogo
         if(scoreBadge) scoreBadge.innerText = `XP: ${score}`;
+        
+        // --- DAR XP REAL (NOVO) ---
+        if(window.awardXP) window.awardXP(10, 'Quiz Acerto');
+        
         showFeedback(true, q.why);
     } else {
         btnElement.classList.add('wrong');
@@ -189,7 +193,6 @@ function checkAnswer(selectedIdx, btnElement) {
         showFeedback(false, q.why);
     }
     
-    // Atualiza visualmente o passo atual como certo ou errado
     updateProgress(isCorrect);
 }
 
@@ -211,7 +214,7 @@ function finishGame() {
     gameActive.style.display = 'none';
     gameResult.style.display = 'block';
     finalScoreEl.innerText = score;
-    if(score >= 300) showToast('Parabéns! Excelente pontuação! 🏆', 'success');
+    if(score >= 30) showToast('Parabéns! Excelente pontuação! 🏆', 'success');
 }
 
 // --- TEMA E TOAST ---

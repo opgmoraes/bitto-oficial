@@ -26,12 +26,11 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
     } else {
-        // Redireciona para login se não estiver logado
         window.location.href = 'login.html';
     }
 });
 
-// --- UI UPDATE (MANTIDO) ---
+// --- UI UPDATE ---
 function updateCardUI() {
     if(flipCard) flipCard.classList.remove('is-flipped');
     setTimeout(() => {
@@ -49,12 +48,26 @@ function updateCardUI() {
 
 function toggleFlip() { if(flipCard) flipCard.classList.toggle('is-flipped'); }
 
-// --- NAVEGAÇÃO (MANTIDO) ---
+// --- NAVEGAÇÃO ---
 if(prevBtn) prevBtn.addEventListener('click', () => { if (currentIndex > 0) { currentIndex--; updateCardUI(); } });
+
 if(nextBtn) nextBtn.addEventListener('click', () => { 
-    if (currentIndex < currentDeck.length - 1) { currentIndex++; updateCardUI(); }
-    else { showToast('Deck finalizado! 🎉', 'success'); }
+    if (currentIndex < currentDeck.length - 1) { 
+        currentIndex++; 
+        updateCardUI(); 
+    } else { 
+        // FIM DO DECK
+        showToast('Deck finalizado! 🎉 +50 XP', 'success');
+        
+        // --- DAR XP POR COMPLETAR ---
+        if(window.awardXP) window.awardXP(50, 'Flashcards Concluído');
+        
+        // Reinicia para estudo contínuo se quiser
+        currentIndex = 0;
+        setTimeout(updateCardUI, 1000);
+    }
 });
+
 if(flipBtn) flipBtn.addEventListener('click', toggleFlip);
 if(flipCard) flipCard.addEventListener('click', toggleFlip);
 
@@ -82,7 +95,7 @@ if(generateBtn) {
             return;
         }
 
-        // 1. VERIFICA SE TEM LIMITE DISPONÍVEL
+        // 1. VERIFICA LIMITE DO PLANO (userManager.js)
         const canUse = await checkUsageLimit(currentUser.uid, 'flashcards');
         if (!canUse) {
             showToast('🔒 Limite mensal atingido (2/2). Faça upgrade!', 'error');
@@ -132,6 +145,10 @@ if(generateBtn) {
             
             // 2. DESCONTA DO PLANO
             await incrementUsage(currentUser.uid, 'flashcards');
+            
+            // --- 3. ATUALIZA ESTATÍSTICAS E XP (NOVO) ---
+            if(window.recordGeneration) window.recordGeneration(quantity); // Conta cards gerados
+            if(window.awardXP) window.awardXP(10, 'Criação de Deck'); // XP por criar
 
             if(deckTitle) deckTitle.innerText = topic || "Deck Gerado";
             showToast(`Sucesso! ${newDeck.length} cards criados.`, 'success');
@@ -155,7 +172,7 @@ if(generateBtn) {
     });
 }
 
-// --- TEMA & TOAST (MANTIDO) ---
+// --- TEMA & TOAST ---
 themeToggle.addEventListener('click', () => {
     const html = document.documentElement;
     const sunIcon = document.querySelector('.icon-sun');
