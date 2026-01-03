@@ -10,49 +10,138 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Unbounded:wght@400;600;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="../css/styles.css">
+    
     <style>
-        .history-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        .history-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            box-shadow: var(--shadow-soft);
-            transition: transform 0.2s;
-        }
-        .history-card:hover { transform: translateY(-3px); }
-        .h-icon {
-            width: 60px; height: 60px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem;
-        }
-        .h-info { display: flex; flex-direction: column; }
-        .h-value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--text-main); }
-        .h-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        /* ESTILOS EXCLUSIVOS DA PÁGINA DE HISTÓRICO */
         
-        .blue-theme .h-icon { background: rgba(0, 53, 255, 0.1); color: var(--primary-blue); }
-        .green-theme .h-icon { background: rgba(0, 184, 132, 0.1); color: #00B884; }
-        .purple-theme .h-icon { background: rgba(138, 43, 226, 0.1); color: blueviolet; }
-
+        /* Cabeçalho do Mês com Gradiente Animado */
         .month-header {
             text-align: center;
-            margin-bottom: 2rem;
-            padding: 2rem;
-            background: linear-gradient(135deg, var(--primary-blue) 0%, #0020A0 100%);
-            border-radius: var(--radius-lg);
+            margin-bottom: 2.5rem;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #0035FF 0%, #0020A0 100%);
+            border-radius: 24px;
             color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 53, 255, 0.3);
         }
-        .month-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .month-desc { opacity: 0.8; font-size: 0.9rem; }
+        
+        .month-header::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: rotateBg 20s linear infinite;
+        }
+        @keyframes rotateBg { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .header-content { position: relative; z-index: 2; }
+        .month-title { font-size: 2.2rem; margin-bottom: 0.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .month-desc { opacity: 0.9; font-size: 1rem; max-width: 600px; margin: 0 auto; }
+
+        /* Barra de Tempo Restante */
+        .time-wrapper {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 50px;
+            padding: 5px;
+            margin: 20px auto 0;
+            max-width: 400px;
+            position: relative;
+        }
+        .time-bar {
+            height: 8px;
+            background: #CCFF00;
+            border-radius: 50px;
+            width: 0%; /* JS vai preencher */
+            transition: width 1s ease;
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.6);
+        }
+        .time-text { font-size: 0.8rem; margin-top: 8px; font-weight: 600; color: #CCFF00; }
+
+        /* Grid Principal */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Cartões de Estatística */
+        .stat-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+        }
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            border-color: var(--primary-blue);
+        }
+
+        /* Ícones e Cores */
+        .icon-bg {
+            width: 50px; height: 50px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .theme-blue .icon-bg { background: rgba(0, 53, 255, 0.1); color: #0035FF; }
+        .theme-green .icon-bg { background: rgba(0, 184, 132, 0.1); color: #00B884; }
+        .theme-purple .icon-bg { background: rgba(138, 43, 226, 0.1); color: blueviolet; }
+        .theme-gold .icon-bg { background: rgba(255, 215, 0, 0.15); color: #D4AF37; }
+
+        /* Tipografia dos Cards */
+        .stat-number { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+        .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-sub { font-size: 0.8rem; color: var(--text-muted); opacity: 0.8; }
+
+        /* Botão de Ação Rápida (no hover ou fixo) */
+        .quick-action {
+            margin-top: 1.5rem;
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+        .quick-action:hover {
+            background: var(--text-main);
+            color: var(--card-bg);
+        }
+        .theme-blue .quick-action:hover { background: #0035FF; color: white; }
+        .theme-green .quick-action:hover { background: #00B884; color: white; }
+        .theme-purple .quick-action:hover { background: blueviolet; color: white; }
+
+        /* Totalizador */
+        .total-card {
+            grid-column: 1 / -1;
+            background: var(--card-bg);
+            border: 2px solid var(--accent-green);
+            flex-direction: row;
+            align-items: center;
+            min-height: 120px;
+        }
+        .total-info { flex: 1; }
+        
+        @media(max-width: 768px) {
+            .month-title { font-size: 1.5rem; }
+            .total-card { flex-direction: column; text-align: center; gap: 1rem; }
+        }
     </style>
 </head>
 <body>
@@ -68,7 +157,7 @@
                 </a>
             </div>
             <div class="nav-center">
-                <span class="page-title">HISTÓRICO MENSAL</span>
+                <span class="page-title">HISTÓRICO</span>
             </div>
             <div class="nav-right">
                 <button class="icon-button" id="themeToggle">
@@ -86,36 +175,59 @@
     <div class="container main-wrapper">
         
         <div class="month-header tilt-element">
-            <h1 class="month-title" id="currentMonthDisplay">Janeiro de 2026</h1>
-            <p class="month-desc">Seu desempenho é resetado todo dia 1º para manter o foco.</p>
+            <div class="header-content">
+                <h1 class="month-title" id="currentMonthDisplay">Carregando...</h1>
+                <p class="month-desc">Este é o resumo da sua produção. Mantenha o ritmo para dominar o conteúdo!</p>
+                
+                <div class="time-wrapper">
+                    <div class="time-bar" id="monthProgressBar"></div>
+                </div>
+                <div class="time-text" id="daysLeftText">Calculando dias restantes...</div>
+            </div>
         </div>
-
-        <h2 class="section-title">Produção deste Mês</h2>
 
         <div class="history-grid">
             
-            <div class="history-card blue-theme tilt-element">
-                <div class="h-icon">🗂️</div>
-                <div class="h-info">
-                    <span class="h-value" id="valFlashcards">0</span>
-                    <span class="h-label">Flashcards Criados</span>
+            <div class="stat-box total-card theme-gold tilt-element">
+                <div class="icon-bg" style="width: 70px; height: 70px; font-size: 2rem;">⚡</div>
+                <div class="total-info">
+                    <span class="stat-label" style="color: #D4AF37;">Produção Total</span>
+                    <div class="stat-number" id="valTotal">0</div>
+                    <span class="stat-sub">Materiais gerados este mês</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 3rem;">🏆</span>
                 </div>
             </div>
 
-            <div class="history-card green-theme tilt-element">
-                <div class="h-icon">🎮</div>
-                <div class="h-info">
-                    <span class="h-value" id="valQuiz">0</span>
-                    <span class="h-label">Quizzes Jogados</span>
+            <div class="stat-box theme-blue tilt-element">
+                <div>
+                    <div class="icon-bg">🗂️</div>
+                    <span class="stat-label">Flashcards</span>
+                    <div class="stat-number" id="valFlashcards">0</div>
+                    <span class="stat-sub">Cards criados</span>
                 </div>
+                <a href="flashcards.html" class="quick-action">Criar Novo Deck →</a>
             </div>
 
-            <div class="history-card purple-theme tilt-element">
-                <div class="h-icon">📝</div>
-                <div class="h-info">
-                    <span class="h-value" id="valReview">0</span>
-                    <span class="h-label">Resumos Gerados</span>
+            <div class="stat-box theme-green tilt-element">
+                <div>
+                    <div class="icon-bg">🎮</div>
+                    <span class="stat-label">Quizzes</span>
+                    <div class="stat-number" id="valQuiz">0</div>
+                    <span class="stat-sub">Partidas jogadas</span>
                 </div>
+                <a href="quiz.html" class="quick-action">Jogar Agora →</a>
+            </div>
+
+            <div class="stat-box theme-purple tilt-element">
+                <div>
+                    <div class="icon-bg">📝</div>
+                    <span class="stat-label">Resumos</span>
+                    <div class="stat-number" id="valReview">0</div>
+                    <span class="stat-sub">Guias gerados</span>
+                </div>
+                <a href="review.html" class="quick-action">Gerar Guia →</a>
             </div>
 
         </div>
