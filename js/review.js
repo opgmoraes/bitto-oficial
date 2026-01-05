@@ -1,6 +1,5 @@
-import { auth, db } from './firebase-init.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, onAuthStateChanged } from './firebase-init.js';
+import { checkUsageLimit, incrementUsage } from './userManager.js';
 
 const themeToggle = document.getElementById('themeToggle');
 const generateBtn = document.getElementById('generateBtn');
@@ -14,84 +13,94 @@ const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const reviewTitle = document.getElementById('reviewTitle');
 const statusText = document.getElementById('statusText');
 
-// Perfil
-const navName = document.getElementById('navUserName');
-const navAvatar = document.querySelector('.avatar-circle');
-
 let currentUser = null;
 
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        try {
-            if(navName || navAvatar) {
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if(navName) navName.innerText = data.displayName?.split(' ')[0] || "Aluno";
-                    if(navAvatar && data.photoURL) navAvatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
-                }
-            }
-        } catch(e) {}
-    } else {
-        window.location.href = 'login.html';
-    }
+// --- AUTH ---
+onAuthStateChanged(auth, (user) => {
+    if (user) currentUser = user;
+    else window.location.href = 'login.html';
 });
 
+// --- EVENTO DE GERAR ---
 if(generateBtn) {
     generateBtn.addEventListener('click', async () => {
         const topic = topicInput ? topicInput.value : "";
         const content = contentInput ? contentInput.value : "";
 
-        if (!content.trim() && !topic.trim()) { showToast('Preencha algo!', 'error'); return; }
-        if (!currentUser) { showToast('Login necessário.', 'error'); return; }
+        if (!content.trim() && !topic.trim()) {
+            showToast('Cole um texto ou defina um tema!', 'error');
+            return;
+        }
 
-        generateBtn.innerHTML = '<span class="loader"></span> ANALISANDO...';
+        if(!currentUser) return;
+
+        // 1. LIMIT CHECK (Plano)
+        const canUse = await checkUsageLimit(currentUser.uid, 'review');
+        if (!canUse) {
+            showToast('🔒 Limite mensal atingido (2/2).', 'error');
+            return;
+        }
+
+        // UI Loading
+        const originalText = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<span class="loader"></span> BITTO PROCESSANDO...';
         generateBtn.classList.add('btn-loading');
         generateBtn.disabled = true;
-        if(statusText) { statusText.style.display = 'block'; statusText.innerText = "Gerando síntese técnica..."; }
+        if(statusText) {
+            statusText.style.display = 'block';
+            statusText.innerText = "Gerando síntese técnica...";
+        }
 
         try {
-            const token = await currentUser.getIdToken();
-            const prompt = `Resumo técnico sobre: ${topic}. Conteúdo: ${content}. Formato Markdown.`;
+            const prompt = `
+                BITTO AI - Modo Professor Técnico.
+                Tema: "${topic}". Conteúdo: "${content}".
+                Gere: 1. Resumo Teórico (Conceitos, Aplicação). 2. Simulado (15 questões variadas). 3. Gabarito.
+                Formato: Markdown bonito. Idioma: PT-BR.
+            `;
 
             const response = await fetch('../api/generate', {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ prompt: prompt, type: 'review', model: "gemini-2.0-flash" })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "gemini-2.5-flash-lite",
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
             });
 
+            if (!response.ok) throw new Error("Erro no Servidor");
+
             const data = await response.json();
-
-            if (!response.ok) {
-                if(response.status === 403) throw new Error("🔒 Limite atingido!");
-                throw new Error(data.error);
-            }
-
             const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!aiResponse) throw new Error("A IA não gerou resposta.");
 
-            if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                const unsafeHtml = marked.parse(aiResponse);
-                reviewOutput.innerHTML = DOMPurify.sanitize(unsafeHtml); 
+            // Render Markdown
+            if (typeof marked !== 'undefined') {
+                reviewOutput.innerHTML = marked.parse(aiResponse);
             } else {
-                reviewOutput.textContent = aiResponse;
+                reviewOutput.innerHTML = `<pre style="white-space: pre-wrap;">${aiResponse}</pre>`;
             }
             
-            if(window.recordActivity) window.recordActivity('review', 1);
-            if(window.awardXP) window.awardXP(20, 'Resumo');
+            // 2. INCREMENT LIMIT (Plano)
+            await incrementUsage(currentUser.uid, 'review');
             
+            // --- 3. XP E ESTATÍSTICAS (NOVO) ---
+            if(window.recordActivity) window.recordActivity('review', 1); // Conta geração
+            if(window.awardXP) window.awardXP(20, 'Resumo IA'); // Ganha XP
+
+            // UI Sucesso
             if(emptyState) emptyState.style.display = 'none';
             reviewOutput.style.display = 'block';
             if(outputActions) outputActions.style.display = 'flex';
             if(topic && reviewTitle) reviewTitle.innerText = `Revisão: ${topic}`;
-            showToast('Resumo gerado!', 'success');
+            showToast('Revisão gerada com sucesso!', 'success');
 
         } catch (error) {
             console.error(error);
-            showToast(error.message, 'error');
-            if(statusText) statusText.innerText = "Erro na conexão.";
+            showToast('Erro ao gerar.', 'error');
+            statusText.innerText = "Erro na conexão.";
         } finally {
-            generateBtn.innerHTML = 'CRIAR GUIA ⚡';
+            generateBtn.innerHTML = originalText;
             generateBtn.classList.remove('btn-loading');
             generateBtn.disabled = false;
             if(statusText) setTimeout(() => statusText.style.display = 'none', 5000);
@@ -99,7 +108,41 @@ if(generateBtn) {
     });
 }
 
-if(downloadPdfBtn) downloadPdfBtn.addEventListener('click', () => { if (typeof html2pdf === 'undefined') { alert("Erro PDF."); return; } const element = document.getElementById('reviewOutput'); html2pdf().from(element).save(); });
-if(copyBtn) copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(reviewOutput.innerText).then(() => showToast('Copiado!', 'success')); });
-if(themeToggle) themeToggle.addEventListener('click', () => { const html = document.documentElement; html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); });
-function showToast(message, type = 'success') { let container = document.getElementById('toast-container'); if(!container) { container = document.createElement('div'); container.id = 'toast-container'; document.body.appendChild(container); } const toast = document.createElement('div'); toast.className = `toast toast-${type}`; toast.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${message}`; container.appendChild(toast); setTimeout(() => { toast.remove() }, 3500); }
+// --- UTILS ---
+if(downloadPdfBtn) {
+    downloadPdfBtn.addEventListener('click', () => {
+        if (typeof html2pdf === 'undefined') { alert("Erro: Lib html2pdf não carregada."); return; }
+        const element = document.getElementById('reviewOutput');
+        const opt = { margin: 10, filename: 'Bitto_Resumo.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+    });
+}
+
+if(copyBtn) {
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(reviewOutput.innerText)
+            .then(() => showToast('Copiado!', 'success'));
+    });
+}
+
+if(themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const html = document.documentElement;
+        if (html.getAttribute('data-theme') === 'dark') html.setAttribute('data-theme', 'light');
+        else html.setAttribute('data-theme', 'dark');
+    });
+}
+
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toast-container');
+    if(!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove() }, 3500);
+}

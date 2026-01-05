@@ -1,6 +1,5 @@
-import { auth, db } from './firebase-init.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, onAuthStateChanged } from './firebase-init.js';
+import { checkUsageLimit, incrementUsage } from './userManager.js';
 
 const themeToggle = document.getElementById('themeToggle');
 const flipCard = document.getElementById('flashcardElement');
@@ -15,39 +14,23 @@ const generateBtn = document.getElementById('generateBtn');
 const deckTitle = document.getElementById('deckTitle');
 const statusText = document.getElementById('statusText');
 
-// Elementos do Perfil
-const navName = document.getElementById('navUserName');
-const navAvatar = document.querySelector('.avatar-circle'); 
-
 let currentDeck = [
-    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma segura. Gere cards usando a IA.' },
-    { q: 'Segurança Ativa', a: 'Seus limites agora são verificados pelo servidor.' }
+    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima para gerar cards.' },
+    { q: 'Login Necessário', a: 'Agora seus estudos são salvos e contados no seu plano.' }
 ];
 let currentIndex = 0;
 let currentUser = null;
 
-// --- AUTH E PERFIL ---
-onAuthStateChanged(auth, async (user) => {
+// --- VERIFICAÇÃO DE LOGIN ---
+onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        
-        // Carrega Perfil
-        try {
-            if(navName || navAvatar) {
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if(navName) navName.innerText = data.displayName?.split(' ')[0] || "Aluno";
-                    if(navAvatar && data.photoURL) navAvatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
-                }
-            }
-        } catch(e) { console.error("Erro perfil:", e); }
-
     } else {
         window.location.href = 'login.html';
     }
 });
 
+// --- UI UPDATE ---
 function updateCardUI() {
     if(flipCard) flipCard.classList.remove('is-flipped');
     setTimeout(() => {
@@ -65,21 +48,36 @@ function updateCardUI() {
 
 function toggleFlip() { if(flipCard) flipCard.classList.toggle('is-flipped'); }
 
+// --- NAVEGAÇÃO ---
 if(prevBtn) prevBtn.addEventListener('click', () => { if (currentIndex > 0) { currentIndex--; updateCardUI(); } });
+
 if(nextBtn) nextBtn.addEventListener('click', () => { 
     if (currentIndex < currentDeck.length - 1) { 
         currentIndex++; 
         updateCardUI(); 
     } else { 
+        // FIM DO DECK
         showToast('Deck finalizado! 🎉 +50 XP', 'success');
-        if(window.awardXP) window.awardXP(50, 'Flashcards');
-        currentIndex = 0; setTimeout(updateCardUI, 1000);
+        
+        // --- DAR XP POR COMPLETAR ---
+        if(window.awardXP) window.awardXP(50, 'Flashcards Concluído');
+        
+        // Reinicia para estudo contínuo se quiser
+        currentIndex = 0;
+        setTimeout(updateCardUI, 1000);
     }
 });
+
 if(flipBtn) flipBtn.addEventListener('click', toggleFlip);
 if(flipCard) flipCard.addEventListener('click', toggleFlip);
 
-// --- GERADOR BLINDADO ---
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); toggleFlip(); }
+    if (e.code === 'ArrowRight') if(nextBtn) nextBtn.click();
+    if (e.code === 'ArrowLeft') if(prevBtn) prevBtn.click();
+});
+
+// --- GERADOR BITTO ---
 if(generateBtn) {
     generateBtn.addEventListener('click', async () => {
         const topic = document.getElementById('deckTopic').value;
@@ -87,66 +85,84 @@ if(generateBtn) {
         const qtyInput = document.querySelector('input[name="cardQty"]:checked');
         const quantity = qtyInput ? parseInt(qtyInput.value) : 5;
 
-        if (!topic && !content.trim()) { showToast('Digite um tema!', 'error'); return; }
-        if (!currentUser) { showToast('Faça login.', 'error'); return; }
+        if (!topic && !content.trim()) {
+            showToast('Digite um tema para estudar!', 'error');
+            return;
+        }
 
+        if (!currentUser) {
+            showToast('Você precisa estar logado.', 'error');
+            return;
+        }
+
+        // 1. VERIFICA LIMITE DO PLANO (userManager.js)
+        const canUse = await checkUsageLimit(currentUser.uid, 'flashcards');
+        if (!canUse) {
+            showToast('🔒 Limite mensal atingido (2/2). Faça upgrade!', 'error');
+            return;
+        }
+
+        // UI Loading
         const originalText = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="loader"></span> PROCESSANDO...';
+        generateBtn.innerHTML = '<span class="loader"></span> CONSULTANDO BITTO...';
         generateBtn.classList.add('btn-loading');
         generateBtn.disabled = true;
         
-        if(statusText) { statusText.style.display = 'block'; statusText.innerText = "Verificando limites e gerando..."; }
+        if(statusText) {
+            statusText.style.display = 'block';
+            statusText.innerText = "Gerando plano de estudos...";
+        }
 
         try {
-            // 1. Token Seguro
-            const token = await currentUser.getIdToken();
-
             const prompt = `
-                Crie um JSON array com ${quantity} flashcards sobre "${topic}". Contexto: "${content}".
-                Formato: [{"q": "...", "a": "..."}]. Idioma: PT-BR. JSON PURO.
+                Você é o BITTO AI, Tutor Universal.
+                Tema: "${topic}". Contexto: "${content}".
+                Crie um JSON array com ${quantity} flashcards.
+                Formato: [{"q": "Pergunta", "a": "Resposta"}]
+                Idioma: Português BR. JSON PURO.
             `;
 
-            // 2. Chamada Segura API
             const response = await fetch('../api/generate', {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    prompt: prompt,
-                    type: 'flashcards',
-                    model: "gemini-2.0-flash"
+                    model: "gemini-2.5-flash-lite",
+                    contents: [{ parts: [{ text: prompt }] }]
                 })
             });
 
+            if (!response.ok) throw new Error("Erro na API Backend");
             const data = await response.json();
-
-            if (!response.ok) {
-                if(response.status === 403) throw new Error("🔒 Limite atingido! Faça upgrade.");
-                throw new Error(data.error || "Erro na geração.");
-            }
-
             let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!rawText) throw new Error("IA retornou vazio.");
-            
+            if (!rawText) throw new Error("A IA respondeu vazio.");
+
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             const newDeck = JSON.parse(rawText);
 
+            // Sucesso
             currentDeck = newDeck;
             currentIndex = 0;
+            
+            // 2. DESCONTA DO PLANO
+            await incrementUsage(currentUser.uid, 'flashcards');
+            
+            // --- 3. ATUALIZA ESTATÍSTICAS E XP (NOVO) ---
+            if(window.recordActivity) window.recordActivity('flashcards', parseInt(qty)); // Conta cards gerados
+            if(window.awardXP) window.awardXP(10, 'Criação de Deck'); // XP por criar
 
-            if(window.recordActivity) window.recordActivity('flashcards', quantity); 
-            if(window.awardXP) window.awardXP(10, 'Criação');
-
-            if(deckTitle) deckTitle.innerText = `Deck: ${topic}`;
+            if(deckTitle) deckTitle.innerText = topic || "Deck Gerado";
             showToast(`Sucesso! ${newDeck.length} cards criados.`, 'success');
             updateCardUI();
 
+            if(window.innerWidth < 900) {
+                const studyArea = document.querySelector('.study-column');
+                if(studyArea) studyArea.scrollIntoView({ behavior: 'smooth' });
+            }
+
         } catch (error) {
-            console.error(error);
-            showToast(error.message, 'error');
-            if(statusText) statusText.innerText = "Erro.";
+            console.error("Erro:", error);
+            showToast("Erro: " + error.message, 'error');
+            if(statusText) statusText.innerText = "Falha.";
         } finally {
             generateBtn.innerHTML = originalText;
             generateBtn.classList.remove('btn-loading');
@@ -156,19 +172,36 @@ if(generateBtn) {
     });
 }
 
+// --- TEMA & TOAST ---
+themeToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const sunIcon = document.querySelector('.icon-sun');
+    const moonIcon = document.querySelector('.icon-moon');
+    if (html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+});
+
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
-    if(!container) { container = document.createElement('div'); container.id = 'toast-container'; document.body.appendChild(container); }
+    if(!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${type==='success'?'✅':(type==='error'?'❌':'ℹ️')}</span> ${message}`;
+    let icon = type === 'success' ? '✅' : '⚠️';
+    if(type === 'error') icon = '❌';
+    toast.innerHTML = `<span>${icon}</span> ${message}`;
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+    setTimeout(() => { toast.remove() }, 3500);
 }
-
-if(themeToggle) themeToggle.addEventListener('click', () => {
-    const html = document.documentElement;
-    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-});
 
 updateCardUI();
