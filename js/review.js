@@ -53,24 +53,12 @@ if(generateBtn) {
 
         try {
             const token = await currentUser.getIdToken();
-            const prompt = `
-                BITTO AI - Modo Professor Técnico.
-                Tema: "${topic}". Conteúdo: "${content}".
-                Gere: 1. Resumo Teórico (Conceitos, Aplicação). 2. Simulado (15 questões variadas). 3. Gabarito.
-                Formato: Markdown bonito. Idioma: PT-BR.
-            `;
+            const prompt = `Resumo técnico sobre: ${topic}. Conteúdo: ${content}. Formato Markdown.`;
 
             const response = await fetch('../api/generate', {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }],
-                    type: 'review', 
-                    model: "gemini-2.0-flash" 
-                })
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ prompt: prompt, type: 'review', model: "gemini-2.0-flash" })
             });
 
             const data = await response.json();
@@ -82,7 +70,6 @@ if(generateBtn) {
 
             const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            // XSS Protection
             if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                 const unsafeHtml = marked.parse(aiResponse);
                 reviewOutput.innerHTML = DOMPurify.sanitize(unsafeHtml); 
@@ -100,6 +87,7 @@ if(generateBtn) {
             showToast('Resumo gerado!', 'success');
 
         } catch (error) {
+            console.error(error);
             showToast(error.message, 'error');
             if(statusText) statusText.innerText = "Erro na conexão.";
         } finally {

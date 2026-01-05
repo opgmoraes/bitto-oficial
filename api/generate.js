@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import admin from "firebase-admin";
 
-// Inicializa o Firebase Admin (Camada de Segurança)
+// Inicializa o Firebase Admin com a chave de serviço
 if (!admin.apps.length) {
     try {
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -10,10 +10,10 @@ if (!admin.apps.length) {
                 credential: admin.credential.cert(serviceAccount)
             });
         } else {
-            console.error("ERRO: FIREBASE_SERVICE_ACCOUNT não configurado no Vercel.");
+            console.error("ERRO: Variável FIREBASE_SERVICE_ACCOUNT não encontrada no Vercel.");
         }
     } catch (error) {
-        console.error("Erro crítico ao iniciar Firebase Admin:", error);
+        console.error("Erro ao iniciar Firebase Admin:", error);
     }
 }
 
@@ -21,7 +21,7 @@ const db = admin.firestore();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export default async function handler(req, res) {
-    // 1. Mantendo sua configuração de CORS original
+    // Configuração de CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -35,22 +35,21 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        // 2. SEGURANÇA: Verificar quem é o usuário (Token)
+        // 1. SEGURANÇA: Verifica Token
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'Não autorizado. Faça login.' });
         }
         const idToken = authHeader.split('Bearer ')[1];
 
-        // Decodifica o token
+        // Decodifica Token
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const userId = decodedToken.uid;
         
-        // Pega os dados enviados pelo frontend
-        const { contents, model, type } = req.body; 
+        // Pega parâmetros. Aceita tanto 'prompt' quanto 'contents' para compatibilidade
+        const { prompt, type, model, contents } = req.body; 
 
-        // 3. COBRANÇA SEGURA NO SERVIDOR
-        // O frontend DEVE mandar o 'type' (flashcards, quiz, review) para descontar
+        // 2. CONTROLE DE LIMITE NO SERVIDOR
         if (type) {
             await db.runTransaction(async (transaction) => {
                 const userRef = db.collection('users').doc(userId);
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
                     throw new Error("LIMIT_EXCEEDED");
                 }
 
-                // Cobra o uso
+                // Cobra o crédito
                 transaction.update(userRef, {
                     [`usage.${type}`]: admin.firestore.FieldValue.increment(1),
                     "stats.cardsGeneratedMonth": admin.firestore.FieldValue.increment(type === 'flashcards' ? 5 : 1)
@@ -77,42 +76,25 @@ export default async function handler(req, res) {
             });
         }
 
-        // 4. CHAMADA AO GEMINI (Sua lógica original preservada)
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) return res.status(500).json({ error: 'API Key do Google não configurada.' });
+        // 3. GERAÇÃO COM GEMINI
+        const modelName = model || "gemini-2.0-flash";
+        const geminiModel = genAI.getGenerativeModel({ model: modelName });
+        
+        // Normaliza o prompt
+        const finalPrompt = contents ? contents[0].parts[0].text : prompt;
+        
+        const result = await geminiModel.generateContent(finalPrompt);
+        const response = await result.response;
+        const text = response.text();
 
-        const modelName = model || "gemini-2.0-flash"; 
-
-        const googleResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents,
-                    safetySettings: [
-                        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-                        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-                        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-                        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-                    ]
-                })
-            }
-        );
-
-        const data = await googleResponse.json();
-
-        if (!googleResponse.ok) {
-            return res.status(googleResponse.status).json(data);
-        }
-
-        res.status(200).json(data);
+        return res.status(200).json({ candidates: [{ content: { parts: [{ text }] } }] });
 
     } catch (error) {
         console.error("Erro API:", error);
         if (error.message === "LIMIT_EXCEEDED") {
             return res.status(403).json({ error: "Limite mensal atingido! Faça upgrade." });
         }
+        // Retorna JSON de erro para o frontend tratar
         return res.status(500).json({ error: "Erro interno: " + error.message });
     }
 }

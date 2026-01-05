@@ -1,4 +1,4 @@
-import { auth, db } from './firebase-init.js'; // Adicionei db para o perfil
+import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -15,13 +15,13 @@ const generateBtn = document.getElementById('generateBtn');
 const deckTitle = document.getElementById('deckTitle');
 const statusText = document.getElementById('statusText');
 
-// Elementos de Perfil (Para corrigir o sumiço)
+// Elementos do Perfil
 const navName = document.getElementById('navUserName');
-const navAvatar = document.querySelector('.avatar-circle');
+const navAvatar = document.querySelector('.avatar-circle'); 
 
 let currentDeck = [
-    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima para gerar cards.' },
-    { q: 'Login Necessário', a: 'Agora seus estudos são salvos e contados no seu plano.' }
+    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma segura. Gere cards usando a IA.' },
+    { q: 'Segurança Ativa', a: 'Seus limites agora são verificados pelo servidor.' }
 ];
 let currentIndex = 0;
 let currentUser = null;
@@ -30,7 +30,8 @@ let currentUser = null;
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        // Restaurar Perfil Visual
+        
+        // Carrega Perfil
         try {
             if(navName || navAvatar) {
                 const snap = await getDoc(doc(db, "users", user.uid));
@@ -41,6 +42,7 @@ onAuthStateChanged(auth, async (user) => {
                 }
             }
         } catch(e) { console.error("Erro perfil:", e); }
+
     } else {
         window.location.href = 'login.html';
     }
@@ -70,7 +72,7 @@ if(nextBtn) nextBtn.addEventListener('click', () => {
         updateCardUI(); 
     } else { 
         showToast('Deck finalizado! 🎉 +50 XP', 'success');
-        if(window.awardXP) window.awardXP(50, 'Flashcards Concluído');
+        if(window.awardXP) window.awardXP(50, 'Flashcards');
         currentIndex = 0; setTimeout(updateCardUI, 1000);
     }
 });
@@ -96,28 +98,25 @@ if(generateBtn) {
         if(statusText) { statusText.style.display = 'block'; statusText.innerText = "Verificando limites e gerando..."; }
 
         try {
-            // 1. Obter Token Seguro
+            // 1. Token Seguro
             const token = await currentUser.getIdToken();
 
             const prompt = `
-                Você é o BITTO AI, Tutor Universal.
-                Tema: "${topic}". Contexto: "${content}".
-                Crie um JSON array com ${quantity} flashcards.
-                Formato: [{"q": "Pergunta", "a": "Resposta"}]
-                Idioma: Português BR. JSON PURO.
+                Crie um JSON array com ${quantity} flashcards sobre "${topic}". Contexto: "${content}".
+                Formato: [{"q": "...", "a": "..."}]. Idioma: PT-BR. JSON PURO.
             `;
 
-            // 2. Chamar API com Token e Tipo (para cobrança)
+            // 2. Chamada Segura API
             const response = await fetch('../api/generate', {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    model: "gemini-2.0-flash",
-                    type: 'flashcards' // Importante para o backend saber o que cobrar
+                    prompt: prompt,
+                    type: 'flashcards',
+                    model: "gemini-2.0-flash"
                 })
             });
 
@@ -138,9 +137,9 @@ if(generateBtn) {
             currentIndex = 0;
 
             if(window.recordActivity) window.recordActivity('flashcards', quantity); 
-            if(window.awardXP) window.awardXP(10, 'Criação de Deck');
+            if(window.awardXP) window.awardXP(10, 'Criação');
 
-            if(deckTitle) deckTitle.innerText = topic || "Deck Gerado";
+            if(deckTitle) deckTitle.innerText = `Deck: ${topic}`;
             showToast(`Sucesso! ${newDeck.length} cards criados.`, 'success');
             updateCardUI();
 
@@ -162,8 +161,7 @@ function showToast(message, type = 'success') {
     if(!container) { container = document.createElement('div'); container.id = 'toast-container'; document.body.appendChild(container); }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    let icon = type==='success'?'✅':(type==='error'?'❌':'ℹ️');
-    toast.innerHTML = `<span>${icon}</span> ${message}`;
+    toast.innerHTML = `<span>${type==='success'?'✅':(type==='error'?'❌':'ℹ️')}</span> ${message}`;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
 }

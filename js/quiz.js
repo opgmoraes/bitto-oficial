@@ -1,12 +1,12 @@
 import { auth, db } from './firebase-init.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js)";
+import { doc, getDoc } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js)";
 
 const themeToggle = document.getElementById('themeToggle');
 const startBtn = document.getElementById('startQuizBtn');
 const nextBtn = document.getElementById('nextQuestionBtn');
 
-// UI Elements
+// UI
 const emptyState = document.getElementById('emptyState');
 const loadingState = document.getElementById('loadingState');
 const gameActive = document.getElementById('gameActive');
@@ -70,10 +70,28 @@ if(startBtn) {
         gameActive.style.display = 'none';
 
         try {
-            await fetchQuestions(topic, difficulty);
-            
-            if(window.recordActivity) window.recordActivity('quiz', 1);
+            const token = await currentUser.getIdToken();
+            const prompt = `Gere um Quiz JSON sobre "${topic}". Nível: ${difficulty}. 5 Perguntas. Formato: [{"q": "...", "options": ["A", "B", "C", "D"], "correct": 0, "why": "..."}]. JSON PURO.`;
 
+            const response = await fetch('../api/generate', {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ prompt: prompt, type: 'quiz', model: "gemini-2.0-flash" })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if(response.status === 403) throw new Error("🔒 Limite atingido!");
+                throw new Error(data.error || "Erro na API");
+            }
+
+            let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            questions = JSON.parse(rawText);
+
+            if(window.recordActivity) window.recordActivity('quiz', 1);
+            
             loadingState.style.display = 'none';
             gameActive.style.display = 'block';
             if(gameTitle) gameTitle.innerText = topic;
@@ -99,44 +117,6 @@ if(startBtn) {
     });
 }
 
-async function fetchQuestions(topic, difficulty) {
-    const token = await currentUser.getIdToken();
-
-    const prompt = `
-        Gere um Quiz JSON válido sobre: "${topic}".
-        Nível: ${difficulty}. Quantidade: ${TOTAL_QUESTIONS}.
-        FORMATO JSON: [{"q": "...", "options": ["A", "B", "C", "D"], "correct": 0, "why": "..."}]
-        Regras: JSON PURO. Português.
-    `;
-
-    const response = await fetch('../api/generate', {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            model: "gemini-2.0-flash",
-            type: 'quiz'
-        })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        if(response.status === 403) throw new Error("🔒 Limite atingido!");
-        throw new Error(data.error || "Erro na API");
-    }
-
-    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!rawText) throw new Error("Resposta vazia.");
-
-    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    questions = JSON.parse(rawText);
-}
-
-// Funções de jogo originais (Preservadas)
 function setupProgressSteps() { progressSteps.innerHTML = ''; for(let i=0; i<TOTAL_QUESTIONS; i++) { const step = document.createElement('div'); step.className = 'step'; progressSteps.appendChild(step); } }
 function updateProgress(isCorrect = null) { const steps = document.querySelectorAll('.step'); if(currentQuestionIndex > 0 && isCorrect !== null) steps[currentQuestionIndex - 1].className = isCorrect ? 'step completed' : 'step wrong-history'; if(currentQuestionIndex < steps.length) steps[currentQuestionIndex].className = 'step active'; }
 function loadQuestion() { const q = questions[currentQuestionIndex]; questionText.innerText = q.q; optionsContainer.innerHTML = ''; feedbackArea.style.display = 'none'; updateProgress(null); q.options.forEach((opt, idx) => { const btn = document.createElement('button'); btn.className = 'option-btn'; btn.innerText = opt; btn.onclick = () => checkAnswer(idx, btn); optionsContainer.appendChild(btn); }); }
