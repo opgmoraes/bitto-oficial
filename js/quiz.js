@@ -1,5 +1,4 @@
 import { auth, onAuthStateChanged } from './firebase-init.js';
-import { checkUsageLimit, incrementUsage } from './userManager.js';
 
 const themeToggle = document.getElementById('themeToggle');
 const startBtn = document.getElementById('startQuizBtn');
@@ -53,14 +52,7 @@ if(startBtn) {
             return;
         }
 
-        // 1. CHECK LIMIT (Plano)
-        const canUse = await checkUsageLimit(currentUser.uid, 'quiz');
-        if (!canUse) {
-            showToast('🔒 Limite mensal de Quizzes atingido (2/2).', 'error');
-            return;
-        }
-
-        // Setup UI
+        // UI Loading
         const originalText = startBtn.innerHTML;
         startBtn.innerHTML = '<span class="loader"></span> GERANDO...';
         startBtn.classList.add('btn-loading');
@@ -75,15 +67,13 @@ if(startBtn) {
         try {
             await fetchQuestions(topic, difficulty);
             
-            // 2. INCREMENT USAGE (Plano)
-            await incrementUsage(currentUser.uid, 'quiz');
+            // A API já cuidou do limite.
             
-            // --- 3. ESTATÍSTICAS (NOVO) ---
-            // Conta 1 jogo de 'quiz'
-            if(window.recordActivity) window.recordActivity('quiz', 1); // Conta como 1 jogo gerado
+            // Estatísticas
+            if(window.recordActivity) window.recordActivity('quiz', 1);
 
             // Sucesso
-           loadingState.style.display = 'none';
+            loadingState.style.display = 'none';
             gameActive.style.display = 'block';
             if(gameTitle) gameTitle.innerText = topic;
             if(resultTopicEl) resultTopicEl.innerText = topic;
@@ -97,7 +87,7 @@ if(startBtn) {
 
         } catch (error) {
             console.error(error);
-            showToast('Erro ao criar quiz: ' + error.message, 'error');
+            showToast(error.message, 'error');
             loadingState.style.display = 'none';
             emptyState.style.display = 'flex';
         } finally {
@@ -108,8 +98,11 @@ if(startBtn) {
     });
 }
 
-// --- API FETCH ---
+// --- API FETCH SEGURA ---
 async function fetchQuestions(topic, difficulty) {
+    // 1. Token de Segurança
+    const token = await currentUser.getIdToken();
+
     const prompt = `
         Gere um Quiz JSON válido sobre: "${topic}".
         Nível: ${difficulty}. Quantidade: ${TOTAL_QUESTIONS}.
@@ -117,18 +110,27 @@ async function fetchQuestions(topic, difficulty) {
         Regras: JSON PURO. Português.
     `;
 
+    // 2. Chamada Segura
     const response = await fetch('../api/generate', {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+        },
         body: JSON.stringify({
-            model: "gemini-2.5-flash-lite",
-            contents: [{ parts: [{ text: prompt }] }]
+            prompt: prompt,
+            type: 'quiz' // Avisa a API
         })
     });
 
-    if (!response.ok) throw new Error("Erro na API");
-
     const data = await response.json();
+
+    if (!response.ok) {
+        // Erro de Limite ou Outro
+        if(response.status === 403) throw new Error("🔒 Limite mensal de Quizzes atingido (2/2).");
+        throw new Error(data.error || "Erro na API");
+    }
+
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if(!rawText) throw new Error("Resposta vazia.");
 
@@ -136,7 +138,7 @@ async function fetchQuestions(topic, difficulty) {
     questions = JSON.parse(rawText);
 }
 
-// --- LÓGICA DO JOGO ---
+// --- LÓGICA DO JOGO (MANTIDA) ---
 function setupProgressSteps() {
     progressSteps.innerHTML = '';
     for(let i=0; i<TOTAL_QUESTIONS; i++) {
@@ -181,10 +183,9 @@ function checkAnswer(selectedIdx, btnElement) {
     const isCorrect = (selectedIdx === correctIdx);
     if (isCorrect) {
         btnElement.classList.add('correct');
-        score += 10; // Pontuação do jogo
+        score += 10; 
         if(scoreBadge) scoreBadge.innerText = `XP: ${score}`;
         
-        // --- DAR XP REAL (NOVO) ---
         if(window.awardXP) window.awardXP(10, 'Quiz Acerto');
         
         showFeedback(true, q.why);
@@ -218,7 +219,6 @@ function finishGame() {
     if(score >= 30) showToast('Parabéns! Excelente pontuação! 🏆', 'success');
 }
 
-// --- TEMA E TOAST ---
 if(themeToggle) {
     themeToggle.addEventListener('click', () => {
         const html = document.documentElement;
@@ -246,10 +246,8 @@ function showToast(message, type = 'success') {
     }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
     let icon = type === 'success' ? '✅' : '⚠️';
     if(type === 'error') icon = '❌';
-
     toast.innerHTML = `<span>${icon}</span> ${message}`;
     container.appendChild(toast);
     setTimeout(() => { 

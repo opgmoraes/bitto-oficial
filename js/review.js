@@ -1,5 +1,4 @@
 import { auth, onAuthStateChanged } from './firebase-init.js';
-import { checkUsageLimit, incrementUsage } from './userManager.js';
 
 const themeToggle = document.getElementById('themeToggle');
 const generateBtn = document.getElementById('generateBtn');
@@ -32,12 +31,8 @@ if(generateBtn) {
             return;
         }
 
-        if(!currentUser) return;
-
-        // 1. LIMIT CHECK (Plano)
-        const canUse = await checkUsageLimit(currentUser.uid, 'review');
-        if (!canUse) {
-            showToast('🔒 Limite mensal atingido (2/2).', 'error');
+        if(!currentUser) {
+            showToast('Login necessário.', 'error');
             return;
         }
 
@@ -52,6 +47,9 @@ if(generateBtn) {
         }
 
         try {
+            // 1. Token de Segurança
+            const token = await currentUser.getIdToken();
+
             const prompt = `
                 BITTO AI - Modo Professor Técnico.
                 Tema: "${topic}". Conteúdo: "${content}".
@@ -59,34 +57,37 @@ if(generateBtn) {
                 Formato: Markdown bonito. Idioma: PT-BR.
             `;
 
+            // 2. Chamada Segura
             const response = await fetch('../api/generate', {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    model: "gemini-2.5-flash-lite",
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ prompt, type: 'review' })
             });
 
-            if (!response.ok) throw new Error("Erro no Servidor");
-
             const data = await response.json();
+
+            if (!response.ok) {
+                if(response.status === 403) throw new Error("🔒 Limite mensal atingido (2/2).");
+                throw new Error(data.error || "Erro no Servidor");
+            }
+
             const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!aiResponse) throw new Error("A IA não gerou resposta.");
 
-            // Render Markdown
-            if (typeof marked !== 'undefined') {
-                reviewOutput.innerHTML = marked.parse(aiResponse);
+            // 3. RENDERIZAÇÃO SEGURA (XSS Protection)
+            if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+                const unsafeHtml = marked.parse(aiResponse);
+                reviewOutput.innerHTML = DOMPurify.sanitize(unsafeHtml);
             } else {
-                reviewOutput.innerHTML = `<pre style="white-space: pre-wrap;">${aiResponse}</pre>`;
+                reviewOutput.textContent = aiResponse; // Fallback
             }
             
-            // 2. INCREMENT LIMIT (Plano)
-            await incrementUsage(currentUser.uid, 'review');
-            
-            // --- 3. XP E ESTATÍSTICAS (NOVO) ---
-            if(window.recordActivity) window.recordActivity('review', 1); // Conta geração
-            if(window.awardXP) window.awardXP(20, 'Resumo IA'); // Ganha XP
+            // Stats
+            if(window.recordActivity) window.recordActivity('review', 1);
+            if(window.awardXP) window.awardXP(20, 'Resumo IA');
 
             // UI Sucesso
             if(emptyState) emptyState.style.display = 'none';
@@ -97,7 +98,7 @@ if(generateBtn) {
 
         } catch (error) {
             console.error(error);
-            showToast('Erro ao gerar.', 'error');
+            showToast(error.message, 'error');
             statusText.innerText = "Erro na conexão.";
         } finally {
             generateBtn.innerHTML = originalText;
@@ -142,7 +143,9 @@ function showToast(message, type = 'success') {
     }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${message}`;
+    let icon = type === 'success' ? '✅' : '⚠️';
+    if(type === 'error') icon = '❌';
+    toast.innerHTML = `<span>${icon}</span> ${message}`;
     container.appendChild(toast);
     setTimeout(() => { toast.remove() }, 3500);
 }

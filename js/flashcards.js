@@ -1,5 +1,4 @@
 import { auth, onAuthStateChanged } from './firebase-init.js';
-import { checkUsageLimit, incrementUsage } from './userManager.js';
 
 const themeToggle = document.getElementById('themeToggle');
 const flipCard = document.getElementById('flashcardElement');
@@ -15,8 +14,8 @@ const deckTitle = document.getElementById('deckTitle');
 const statusText = document.getElementById('statusText');
 
 let currentDeck = [
-    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma de estudos. Digite QUALQUER tema acima para gerar cards.' },
-    { q: 'Login Necessário', a: 'Agora seus estudos são salvos e contados no seu plano.' }
+    { q: 'Bem-vindo ao BITTO!', a: 'Sua plataforma segura. Gere cards usando a IA.' },
+    { q: 'Segurança Ativa', a: 'Seus limites agora são verificados pelo servidor.' }
 ];
 let currentIndex = 0;
 let currentUser = null;
@@ -56,13 +55,8 @@ if(nextBtn) nextBtn.addEventListener('click', () => {
         currentIndex++; 
         updateCardUI(); 
     } else { 
-        // FIM DO DECK
         showToast('Deck finalizado! 🎉 +50 XP', 'success');
-        
-        // --- DAR XP POR COMPLETAR ---
         if(window.awardXP) window.awardXP(50, 'Flashcards Concluído');
-        
-        // Reinicia para estudo contínuo se quiser
         currentIndex = 0;
         setTimeout(updateCardUI, 1000);
     }
@@ -77,7 +71,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') if(prevBtn) prevBtn.click();
 });
 
-// --- GERADOR BITTO ---
+// --- GERADOR BLINDADO ---
 if(generateBtn) {
     generateBtn.addEventListener('click', async () => {
         const topic = document.getElementById('deckTopic').value;
@@ -95,13 +89,6 @@ if(generateBtn) {
             return;
         }
 
-        // 1. VERIFICA LIMITE DO PLANO (userManager.js)
-        const canUse = await checkUsageLimit(currentUser.uid, 'flashcards');
-        if (!canUse) {
-            showToast('🔒 Limite mensal atingido (2/2). Faça upgrade!', 'error');
-            return;
-        }
-
         // UI Loading
         const originalText = generateBtn.innerHTML;
         generateBtn.innerHTML = '<span class="loader"></span> CONSULTANDO BITTO...';
@@ -110,10 +97,13 @@ if(generateBtn) {
         
         if(statusText) {
             statusText.style.display = 'block';
-            statusText.innerText = "Gerando plano de estudos...";
+            statusText.innerText = "Verificando limites e gerando...";
         }
 
         try {
+            // 1. SEGURANÇA: Pegar o Token do Usuário
+            const token = await currentUser.getIdToken();
+
             const prompt = `
                 Você é o BITTO AI, Tutor Universal.
                 Tema: "${topic}". Contexto: "${content}".
@@ -122,17 +112,27 @@ if(generateBtn) {
                 Idioma: Português BR. JSON PURO.
             `;
 
+            // 2. CHAMADA SEGURA À API (Enviando Token)
             const response = await fetch('../api/generate', {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Token de Segurança
+                },
                 body: JSON.stringify({
-                    model: "gemini-2.5-flash-lite",
-                    contents: [{ parts: [{ text: prompt }] }]
+                    prompt: prompt,
+                    type: 'flashcards' // Avisa a API qual limite cobrar
                 })
             });
 
-            if (!response.ok) throw new Error("Erro na API Backend");
             const data = await response.json();
+
+            // 3. TRATAMENTO DE ERROS (Limite ou Falha)
+            if (!response.ok) {
+                if(response.status === 403) throw new Error("🔒 Limite mensal atingido! Faça upgrade.");
+                throw new Error(data.error || "Erro na API Backend");
+            }
+
             let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!rawText) throw new Error("A IA respondeu vazio.");
 
@@ -143,12 +143,11 @@ if(generateBtn) {
             currentDeck = newDeck;
             currentIndex = 0;
             
-            // 2. DESCONTA DO PLANO
-            await incrementUsage(currentUser.uid, 'flashcards');
+            // A API já cobrou o limite, não precisa de incrementUsage aqui.
             
-            // --- 3. ATUALIZA ESTATÍSTICAS E XP (NOVO) ---
-            if(window.recordActivity) window.recordActivity('flashcards', parseInt(qty)); // Conta cards gerados
-            if(window.awardXP) window.awardXP(10, 'Criação de Deck'); // XP por criar
+            // Atualiza Estatísticas Visuais e XP
+            if(window.recordActivity) window.recordActivity('flashcards', parseInt(quantity));
+            if(window.awardXP) window.awardXP(10, 'Criação de Deck');
 
             if(deckTitle) deckTitle.innerText = topic || "Deck Gerado";
             showToast(`Sucesso! ${newDeck.length} cards criados.`, 'success');
