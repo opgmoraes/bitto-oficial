@@ -98,7 +98,7 @@ async function handleGoogleLogin() {
         await syncUserDatabase(result.user);
         showToast("Conectado com Google!", "success");
         // CORREÇÃO: Redireciona para o dashboard.html na mesma pasta (pages)
-        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         if(error.code === 'auth/unauthorized-domain') showToast("Erro: Domínio não autorizado no Firebase.", "error");
@@ -131,7 +131,7 @@ loginForm.addEventListener('submit', async (e) => {
 
         showToast("Login realizado!", "success");
         // CORREÇÃO: Redireciona para o dashboard
-        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao entrar.";
