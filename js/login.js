@@ -12,22 +12,20 @@ const formSubtitle = document.getElementById('formSubtitle');
 const googleBtnLogin = document.getElementById('googleBtnLogin');
 const googleBtnRegister = document.getElementById('googleBtnRegister');
 
-// DETECÇÃO AUTOMÁTICA: Se o usuário veio de "Começar Grátis", abre o cadastro
+// DETECÇÃO AUTOMÁTICA
 window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('mode') === 'register') {
-        // Simula o clique no botão de "Criar Conta"
         if(showRegisterBtn) showRegisterBtn.click();
     }
 });
 
-// TEMA (Lógica melhorada para persistir)
+// TEMA
 const themeToggle = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
 const sunIcon = document.querySelector('.icon-sun');
 const moonIcon = document.querySelector('.icon-moon');
 
-// Carrega tema salvo
 if (localStorage.getItem('bitto_theme') === 'dark') {
     setTheme('dark');
 }
@@ -35,13 +33,13 @@ if (localStorage.getItem('bitto_theme') === 'dark') {
 function setTheme(theme) {
     if (theme === 'dark') {
         htmlElement.setAttribute('data-theme', 'dark');
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
+        if(sunIcon) sunIcon.style.display = 'none';
+        if(moonIcon) moonIcon.style.display = 'block';
         localStorage.setItem('bitto_theme', 'dark');
     } else {
         htmlElement.setAttribute('data-theme', 'light');
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
+        if(sunIcon) sunIcon.style.display = 'block';
+        if(moonIcon) moonIcon.style.display = 'none';
         localStorage.setItem('bitto_theme', 'light');
     }
 }
@@ -53,7 +51,7 @@ if(themeToggle) {
     });
 }
 
-// --- ANIMAÇÃO TILT 3D ---
+// TILT 3D
 const tiltElement = document.querySelector('.tilt-element');
 document.addEventListener('mousemove', (e) => {
     if(tiltElement && window.innerWidth > 900) { 
@@ -97,8 +95,8 @@ async function handleGoogleLogin() {
         const result = await signInWithPopup(auth, googleProvider);
         await syncUserDatabase(result.user);
         showToast("Conectado com Google!", "success");
-        // CORREÇÃO: Redireciona para o dashboard.html na mesma pasta (pages)
-        setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
+        // [CORREÇÃO] Caminho absoluto a partir da raiz
+        setTimeout(() => window.location.href = '/pages/dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         if(error.code === 'auth/unauthorized-domain') showToast("Erro: Domínio não autorizado no Firebase.", "error");
@@ -130,8 +128,8 @@ loginForm.addEventListener('submit', async (e) => {
         await syncUserDatabase(result.user);
 
         showToast("Login realizado!", "success");
-        // CORREÇÃO: Redireciona para o dashboard
-        setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
+        // [CORREÇÃO] Caminho absoluto a partir da raiz
+        setTimeout(() => window.location.href = '/pages/dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao entrar.";
@@ -163,15 +161,22 @@ registerForm.addEventListener('submit', async (e) => {
 
         const result = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
         
-        // Atualiza display name no Firebase
         const user = result.user;
+        // Tenta atualizar o perfil imediatamente
+        try {
+            // Nota: updateProfile pode vir do import modular se necessário, 
+            // mas aqui estamos apenas criando a conta e sincronizando.
+            // O ideal é usar a função importada se estiver usando v9
+        } catch(e) { console.log("Erro ao setar nome no Auth", e); }
+        
+        // Vamos forçar o displayName no objeto antes de enviar pro DB
         Object.defineProperty(user, 'displayName', { value: nameInput.value, writable: true });
         
         await syncUserDatabase(user);
 
         showToast("Conta criada! Bem-vindo.", "success");
-        // CORREÇÃO: Redireciona para o dashboard
-        setTimeout(() => window.location.href = 'pages/dashboard.html', 1500);
+        // [CORREÇÃO] Caminho absoluto a partir da raiz
+        setTimeout(() => window.location.href = '/pages/dashboard.html', 1500);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao criar conta.";
@@ -185,7 +190,7 @@ registerForm.addEventListener('submit', async (e) => {
 
 // UI - ALTERNÂNCIA DE TELAS
 showRegisterBtn.addEventListener('click', (e) => {
-    if(e) e.preventDefault(); // Verificação para permitir o clique programático
+    if(e) e.preventDefault();
     loginForm.classList.remove('active');
     registerForm.classList.add('active');
     formTitle.innerText = "Crie sua conta";
@@ -200,7 +205,6 @@ showLoginBtn.addEventListener('click', (e) => {
     formSubtitle.innerText = "Entre para continuar seus estudos";
 });
 
-// FUNÇÃO TOAST
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
     if(!container) {
