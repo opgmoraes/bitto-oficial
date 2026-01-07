@@ -28,7 +28,7 @@ onAuthStateChanged(auth, async (user) => {
         setupSettingsSave(user);
 
     } else {
-        // [CORREÇÃO] Caminho para voltar à raiz (index.html) se não estiver logado
+        // [CORREÇÃO] Volta para a raiz para achar o index.html
         window.location.href = '../index.html';
     }
 });
@@ -48,7 +48,7 @@ function updateInterface(user, dbData) {
     document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
     document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
 
-    // === LÓGICA DO CARD "CARDS GERADOS" (ATUALIZADO) ===
+    // === LÓGICA DO CARD "CARDS GERADOS" ===
     const stats = dbData.stats || {};
     const generatedCount = stats.cardsGeneratedMonth || 0;
     
@@ -105,8 +105,8 @@ function updateMascotImage(xp) {
     else if (xp >= 250) imageName = 'bittinho-250';
     else if (xp >= 100) imageName = 'bittinho-100';
     
-    // [CORREÇÃO] Caminho absoluto ou relativo voltando uma pasta
-    mascotImg.src = `../assets/bittinhos/${imageName}.png`;
+    // [CORREÇÃO] Sai da pasta pages (../) e entra em bittinhos
+    mascotImg.src = `../bittinhos/${imageName}.png`;
 }
 
 function updateGreeting(name) {
@@ -195,7 +195,7 @@ if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', () => confirmMod
 
 if(acceptConfirmBtn) acceptConfirmBtn.addEventListener('click', async () => { 
     await signOut(auth); 
-    // [CORREÇÃO] Redireciona para o index na raiz
+    // [CORREÇÃO] Volta para a raiz
     window.location.href = '../index.html'; 
 });
 
@@ -272,9 +272,9 @@ function addMessage(text, type) {
     messageDiv.className = `message message-${type}`;
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
-    // [CORREÇÃO] Caminho da imagem do chat (voltando uma pasta)
+    // [CORREÇÃO] Sai da pasta pages (../) e entra em imagens
     let contentHtml = type === 'bot' 
-        ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="../assets/imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${text}<span class="message-time">${time}</span></div>` 
+        ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="../imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${text}<span class="message-time">${time}</span></div>` 
         : `<div class="message-bubble">${text}<span class="message-time">${time}</span></div>`;
     
     messageDiv.innerHTML = contentHtml;
