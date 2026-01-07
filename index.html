@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitto | Estudo Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="site/loading.css">
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">BITTO<span>.</span></a>
+        <ul style="display: flex; gap: 2.5rem; list-style: none;" class="nav-links">
+            <li><a href="#ferramentas" style="text-decoration: none; color: var(--dark); font-weight: 700;">Ferramentas</a></li>
+            <li><a href="#demonstracao" style="text-decoration: none; color: var(--dark); font-weight: 700;">Demonstração</a></li>
+            <li><a href="#planos" style="text-decoration: none; color: var(--dark); font-weight: 700;">Planos</a></li>
+            <li><a href="#faq" style="text-decoration: none; color: var(--dark); font-weight: 700;">FAQ</a></li>
+        </ul>
+        <a href="pages/login.html" class="btn-login">Entrar</a>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="hero-text">
+                <span class="badge">🚀 Best Learning Platform</span>
+                <h1>Aprenda 3x<span class="highlight">MAIS RÁPIDO</span> usando BITTO!</h1>
+                <p>O ecossistema universitário inteligente. Transforme seus conteúdos em Flashcards, Quizzes e Revisões automáticas em segundos.</p>
+                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <a href="pages/login.html?mode=register" class="btn-main">Quero Começar Agora</a>
+                    <a href="pages/login.html" style="color: var(--dark); font-weight: 800; text-decoration: none; border-bottom: 2.5px solid var(--accent); margin-left: 10px;">Fazer Login</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item"><h3>120+</h3><p>Countries Reached</p></div>
+                    <div class="stat-item"><h3>600+</h3><p>Courses Available</p></div>
+                </div>
+            </div>
+            <div class="hero-image-area">
+                <div class="main-img-box">
+                    <img src="site/universitario.png" alt="Estudantes">
+                </div>
+                <div class="floating-card card-1"><p style="font-weight: 900; margin:0; font-size: 1.1rem; color: var(--primary);">⭐️ 98% Satisfação</p></div>
+                <div class="floating-card card-2"><p style="font-weight: 900; color: var(--dark); margin:0;">ByteStack AI Active</p></div>
+            </div>
+        </section>
+
+        <section class="social-proof-section">
+            <h2 class="section-title-white">Resultados Reais</h2>
+            <div class="dual-cards-container" id="persona-container">
+                <div class="persona-card active" data-pair="0">
+                    <div class="tag">Engenharia • Lucas</div>
+                    <h4>O Estudante que Trabalha</h4>
+                    <p>"O que eu levava a noite inteira para resumir, a Bitto faz em segundos. Já tenho meus Flashcards para o autocarro. Recuperei meu sono."</p>
+                </div>
+                <div class="persona-card active" data-pair="0">
+                    <div class="tag">Direito • Mariana</div>
+                    <h4>A Concurseira</h4>
+                    <p>"Transformo artigos em Quizzes automáticos. Decorar prazos processuais nunca foi tão fácil. É real."</p>
+                </div>
+                <div class="persona-card" data-pair="1">
+                    <div class="tag">Medicina • Felipe</div>
+                    <h4>Ciclo Básico</h4>
+                    <p>"Em medicina, ou você é inteligente ou pifa. A Bitto é minha ferramenta oficial para revisões rápidas de patologia."</p>
+                </div>
+                <div class="persona-card" data-pair="1">
+                    <div class="tag">Humanas • Beatriz</div>
+                    <h4>Universitária</h4>
+                    <p>"Perdia muito tempo sublinhando livros. Agora colo na Bitto e ela me entrega a essência em tópicos e cards."</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-padding" id="ferramentas">
+            <h2 class="section-title">Estudo de Alta Performance</h2>
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <span style="font-size: 3rem; margin-bottom: 20px; display: block;">🃏</span>
+                    <h3 style="font-family: 'Outfit';">Flashcards AI</h3>
+                    <p style="color: var(--text-gray);">Memorização instantânea baseada nos seus textos copiados.</p>
+                </div>
+                <div class="tool-card">
+                    <span style="font-size: 3rem; margin-bottom: 20px; display: block;">📝</span>
+                    <h3 style="font-family: 'Outfit';">Quiz Adaptativo</h3>
+                    <p style="color: var(--text-gray);">Simulados inteligentes que reforçam seus pontos fracos.</p>
+                </div>
+                <div class="tool-card">
+                    <span style="font-size: 3rem; margin-bottom: 20px; display: block;">🚀</span>
+                    <h3 style="font-family: 'Outfit';">Gerador de Revisão</h3>
+                    <p style="color: var(--text-gray);">Resumos otimizados pela tecnologia ByteStack.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-padding" id="demonstracao" style="background: #fff;">
+            <h2 class="section-title">Veja na Prática</h2>
+            <div class="video-grid">
+                <div class="video-card">
+                    <h4>Flashcards</h4>
+                    <div class="video-placeholder">
+                        <video controls poster="site/thumb-flashcards.jpg">
+                            <source src="site/flashcards.mp4" type="video/mp4">
+                            Seu navegador não suporta vídeos.
+                        </video>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <h4>Quizzes</h4>
+                    <div class="video-placeholder">
+                        <video controls poster="site/thumb-quiz.jpg">
+                            <source src="site/quiz.mp4" type="video/mp4">
+                            Seu navegador não suporta vídeos.
+                        </video>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <h4>Revisão AI</h4>
+                    <div class="video-placeholder">
+                        <video controls poster="site/thumb-revisao.jpg">
+                            <source src="site/revisao.mp4" type="video/mp4">
+                            Seu navegador não suporta vídeos.
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-padding pricing-bg" id="planos">
+            <h2 class="section-title">O Plano Ideal para Você</h2>
+            <div class="price-container">
+                <div class="price-card">
+                    <div>
+                        <h3>Bitto Free</h3>
+                        <div class="price-value">R$ 0</div>
+                        <ul class="check-list">
+                            <li>2 Flashcards por mês</li>
+                            <li>2 Quizzes por mês</li>
+                            <li>2 Revisões por mês</li>
+                        </ul>
+                    </div>
+                    <a href="pages/login.html?mode=register" class="btn-login" style="background: #f1f5f9; color: var(--dark); border: 1.5px solid var(--border); display: block; text-align: center; margin-top: 30px;">Começar Grátis</a>
+                </div>
+
+                <div class="price-card">
+                    <div>
+                        <h3>Plano Mensal</h3>
+                        <div class="price-value">R$ 20,20<span>/mês</span></div>
+                        <ul class="check-list">
+                            <li>Uso ilimitado total</li>
+                            <li>Sem compromisso</li>
+                            <li>Cancele quando quiser</li>
+                        </ul>
+                    </div>
+                    <a href="pages/login.html?mode=register" class="btn-login" style="background: #f1f5f9; color: var(--dark); border: 1.5px solid var(--border); display: block; text-align: center; margin-top: 30px;">Assinar Mensal</a>
+                </div>
+
+                <div class="price-card featured">
+                    <div class="featured-tag">🏆 O FAVORITO</div>
+                    <div>
+                        <h3>Plano Trimestral</h3>
+                        <div class="price-value">R$ 17,90<span>/mês</span></div>
+                        <ul class="check-list">
+                            <li><b>Desbloqueia tudo</b> ilimitado</li>
+                            <li>Foco total no semestre</li>
+                            <li>Suporte prioritário ByteStack</li>
+                        </ul>
+                    </div>
+                    <a href="pages/login.html?mode=register" class="btn-main" style="display: block; text-align: center; background: var(--accent); color: #000; font-weight: 900; margin-top: 30px;">Assinar Trimestral</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-padding" id="faq">
+            <h2 class="section-title">Perguntas Frequentes</h2>
+            <div class="faq-wrapper">
+                <div class="faq-item">
+                    <div class="faq-question">1. Como a Bitto me faz aprender 3x mais rápido? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">A Bitto elimina o trabalho mecânico. Em vez de gastar horas escrevendo resumos e criando perguntas, você simplesmente cola o seu conteúdo e a nossa IA gera Revisões, Flashcards e Quizzes instantaneamente.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">2. Como eu envio o meu material para a Bitto? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">É muito simples! A Bitto funciona no sistema "Copie e Cole". Você seleciona o texto da sua aula, site ou livro digital, cola no campo indicado e a mágica acontece.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">3. Posso enviar arquivos em PDF ou fotos? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">Nesta versão, a Bitto é otimizada exclusivamente para textos copiados e colados. Isso evita erros de leitura de ficheiros pesados e garante rapidez absoluta.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">4. A Bitto serve para qualquer curso ou matéria? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">Sim! A nossa inteligência é treinada para compreender desde matérias de Humanas até conteúdos densos de Medicina, Direito e Engenharia.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">5. Posso aceder à Bitto pelo telemóvel? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">Sim. A plataforma é totalmente responsiva. Pode colar os textos no computador e revisar os cards no telemóvel em qualquer lugar.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">6. Como funciona o Plano Trimestral? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">É a escolha inteligente: você garante o semestre inteiro por um valor reduzido (apenas R$ 17,90/mês), mantendo acesso ilimitado em todo o período de exames.</div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">7. E se eu não gostar da ferramenta? <div class="faq-icon-box">+</div></div>
+                    <div class="faq-content"><div class="faq-answer">Oferecemos garantia de 7 dias: se a ferramenta não revolucionar seus estudos, devolvemos seu dinheiro sem burocracia.</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="final-cta">
+            <h2>O semestre não espera por você. A Bitto sim.</h2>
+            <p>Você vai continuar perdendo horas com resumos manuais ou vai começar a aprender 3x mais rápido hoje? Junte-se aos estudantes que já automatizaram sua rotina acadêmica.</p>
+            <a href="pages/login.html?mode=register" class="btn-main" style="background: var(--accent); color: var(--dark); padding: 1.6rem 3.5rem; font-weight: 900; border-radius: 20px;">QUERO COMEÇAR AGORA</a>
+            <p class="cta-disclaimer">Assine agora por apenas R$ 17,90 no plano trimestral. Cancele quando quiser.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <div class="logo" style="color: white; margin-bottom: 1.5rem;">BITTO<span>.</span></div>
+                <p>Bitto – Inteligência para o seu estudo.</p>
+                <p>Transformando textos em conhecimento através de IA.</p>
+                <p style="margin-top: 1.5rem; font-weight: 800;">© 2024 Bitto. Todos os direitos reservados.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Planos</h4>
+                <ul>
+                    <li><a href="#planos">Plano Free</a></li>
+                    <li><a href="#planos">Plano Mensal (R$ 20,20)</a></li>
+                    <li><a href="#planos">Plano Trimestral (R$ 17,90/mês)</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Suporte & Contato</h4>
+                <ul>
+                    <li>Dúvidas? <a href="mailto:suporte@bitto.com">suporte@bitto.com</a></li>
+                    <li>WhatsApp: <a href="https://wa.me/SEUNUMERO" target="_blank">(XX) XXXXX-XXXX</a></li>
+                    <li>Instagram: <a href="#">@bitto_estudos</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <li><a href="site/termos.html">Termos de Uso</a></li>
+                <li><a href="site/privacidade.html">Política de Privacidade</a></li>
+                <li><a href="site/reembolso.html">Políticas de Reembolso (7 dias)</a></li>
+            </ul>
+            </div>  
+        </div>
+        <div class="footer-bottom">
+            <p>"Feito para universitários que valorizam o próprio tempo."</p>
+        </div>
+    </footer>
+
+    <script src="site/loading.js"></script>
+</body>
+</html>

@@ -12,6 +12,15 @@ const formSubtitle = document.getElementById('formSubtitle');
 const googleBtnLogin = document.getElementById('googleBtnLogin');
 const googleBtnRegister = document.getElementById('googleBtnRegister');
 
+// DETECÇÃO AUTOMÁTICA: Se o usuário veio de "Começar Grátis", abre o cadastro
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'register') {
+        // Simula o clique no botão de "Criar Conta"
+        if(showRegisterBtn) showRegisterBtn.click();
+    }
+});
+
 // TEMA (Lógica melhorada para persistir)
 const themeToggle = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
@@ -88,7 +97,8 @@ async function handleGoogleLogin() {
         const result = await signInWithPopup(auth, googleProvider);
         await syncUserDatabase(result.user);
         showToast("Conectado com Google!", "success");
-        setTimeout(() => window.location.href = '../index.html', 1000);
+        // CORREÇÃO: Redireciona para o dashboard.html na mesma pasta (pages)
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         if(error.code === 'auth/unauthorized-domain') showToast("Erro: Domínio não autorizado no Firebase.", "error");
@@ -98,7 +108,7 @@ async function handleGoogleLogin() {
 if(googleBtnLogin) googleBtnLogin.addEventListener('click', handleGoogleLogin);
 if(googleBtnRegister) googleBtnRegister.addEventListener('click', handleGoogleLogin);
 
-// LOGIN EMAIL (CORRIGIDO COM GETELEMENTBYID)
+// LOGIN EMAIL
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -120,7 +130,8 @@ loginForm.addEventListener('submit', async (e) => {
         await syncUserDatabase(result.user);
 
         showToast("Login realizado!", "success");
-        setTimeout(() => window.location.href = '../index.html', 1000);
+        // CORREÇÃO: Redireciona para o dashboard
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao entrar.";
@@ -131,7 +142,7 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// REGISTRO EMAIL (CORRIGIDO COM GETELEMENTBYID)
+// REGISTRO EMAIL
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -154,14 +165,13 @@ registerForm.addEventListener('submit', async (e) => {
         
         // Atualiza display name no Firebase
         const user = result.user;
-        
-        // Define propriedade displayName manualmente antes de salvar no banco, caso o Firebase demore a atualizar
         Object.defineProperty(user, 'displayName', { value: nameInput.value, writable: true });
         
         await syncUserDatabase(user);
 
         showToast("Conta criada! Bem-vindo.", "success");
-        setTimeout(() => window.location.href = '../index.html', 1500);
+        // CORREÇÃO: Redireciona para o dashboard
+        setTimeout(() => window.location.href = 'dashboard.html', 1500);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao criar conta.";
@@ -175,7 +185,7 @@ registerForm.addEventListener('submit', async (e) => {
 
 // UI - ALTERNÂNCIA DE TELAS
 showRegisterBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+    if(e) e.preventDefault(); // Verificação para permitir o clique programático
     loginForm.classList.remove('active');
     registerForm.classList.add('active');
     formTitle.innerText = "Crie sua conta";
