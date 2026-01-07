@@ -28,7 +28,8 @@ onAuthStateChanged(auth, async (user) => {
         setupSettingsSave(user);
 
     } else {
-        window.location.href = 'pages/login.html';
+        // [CORREÇÃO] Caminho para voltar à raiz (index.html) se não estiver logado
+        window.location.href = '../index.html';
     }
 });
 
@@ -56,15 +57,13 @@ function updateInterface(user, dbData) {
     
     if(generatedCountEl) {
         generatedCountEl.innerText = `${generatedCount} Cards`;
-        // Muda cor visualmente conforme progridem
-        if(generatedCount > 50) generatedCountEl.style.color = "var(--accent-green)"; // Muito bom
-        else generatedCountEl.style.color = "var(--primary-blue)"; // Normal
+        if(generatedCount > 50) generatedCountEl.style.color = "var(--accent-green)";
+        else generatedCountEl.style.color = "var(--primary-blue)";
     }
     
     if(generatedDetailsEl) {
         generatedDetailsEl.innerText = "Criados este mês";
     }
-    // ====================================================
 
     // Barra de Progresso
     let range = levelData.limit - levelData.min;
@@ -92,9 +91,6 @@ function updateInterface(user, dbData) {
     if(nameInput) nameInput.value = displayName;
 }
 
-// ... (Resto do código de Mascote, Greeting, Settings, Logout e UI permanece igual) ...
-// Vou incluir apenas as funções auxiliares essenciais para não cortar o código
-
 function updateMascotImage(xp) {
     const mascotImg = document.getElementById('mascotImage');
     if (!mascotImg) return;
@@ -108,7 +104,9 @@ function updateMascotImage(xp) {
     else if (xp >= 500) imageName = 'bittinho-500';
     else if (xp >= 250) imageName = 'bittinho-250';
     else if (xp >= 100) imageName = 'bittinho-100';
-    mascotImg.src = `bittinhos/${imageName}.png`;
+    
+    // [CORREÇÃO] Caminho absoluto ou relativo voltando uma pasta
+    mascotImg.src = `../assets/bittinhos/${imageName}.png`;
 }
 
 function updateGreeting(name) {
@@ -194,7 +192,12 @@ function openLogoutModal(e) { if(e) e.preventDefault(); confirmModal.classList.a
 if(logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
 if(modalLogoutBtn) modalLogoutBtn.addEventListener('click', openLogoutModal);
 if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', () => confirmModal.classList.remove('active'));
-if(acceptConfirmBtn) acceptConfirmBtn.addEventListener('click', async () => { await signOut(auth); window.location.href = 'pages/login.html'; });
+
+if(acceptConfirmBtn) acceptConfirmBtn.addEventListener('click', async () => { 
+    await signOut(auth); 
+    // [CORREÇÃO] Redireciona para o index na raiz
+    window.location.href = '../index.html'; 
+});
 
 // UI Tilt e Tema
 const tiltElements = document.querySelectorAll('.tilt-element');
@@ -268,9 +271,12 @@ function addMessage(text, type) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message message-${type}`;
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // [CORREÇÃO] Caminho da imagem do chat (voltando uma pasta)
     let contentHtml = type === 'bot' 
-        ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${text}<span class="message-time">${time}</span></div>` 
+        ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="../assets/imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${text}<span class="message-time">${time}</span></div>` 
         : `<div class="message-bubble">${text}<span class="message-time">${time}</span></div>`;
+    
     messageDiv.innerHTML = contentHtml;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
