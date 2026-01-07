@@ -171,7 +171,7 @@ registerForm.addEventListener('submit', async (e) => {
 
         showToast("Conta criada! Bem-vindo.", "success");
         // CORREÇÃO: Redireciona para o dashboard
-        setTimeout(() => window.location.href = 'dashboard.html', 1500);
+        setTimeout(() => window.location.href = 'pages/dashboard.html', 1500);
     } catch (error) {
         console.error(error);
         let msg = "Erro ao criar conta.";
