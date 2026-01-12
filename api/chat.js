@@ -32,9 +32,9 @@ export default async function handler(req) {
             });
         }
 
-        // MUDANÇA: Usando gemini-1.5-flash que é mais estável
+        // CORREÇÃO: Usando 'gemini-1.5-flash-latest' que é mais garantido de ser encontrado
         const googleResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -52,9 +52,19 @@ export default async function handler(req) {
 
         const data = await googleResponse.json();
         
-        // CORREÇÃO: Repassa o status real do Google (se for 400, manda 400)
+        // Se der erro no Google, repassa o erro detalhado
+        if (!googleResponse.ok) {
+            return new Response(JSON.stringify(data), {
+                status: googleResponse.status, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*' 
+                }
+            });
+        }
+        
         return new Response(JSON.stringify(data), {
-            status: googleResponse.status, 
+            status: 200,
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*' 
