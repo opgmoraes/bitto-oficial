@@ -16,6 +16,21 @@
     <div class="crt-overlay"></div>
     <div id="toast-container"></div>
 
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-header">
+            <span class="logo-text">MENU</span>
+            <button class="close-menu-btn" id="closeMenuBtn">✕</button>
+        </div>
+        <div class="mobile-links">
+            <a href="#" class="mobile-link active">Dashboard</a>
+            <a href="history.html" class="mobile-link">Histórico</a>
+            <a href="#" class="mobile-link" id="mobileConfigBtn">Configurações</a>
+            <div class="mobile-divider"></div>
+            <button class="mobile-link logout-link" id="mobileLogoutBtn">Sair</button>
+        </div>
+    </div>
+
     <nav class="navbar">
         <div class="container nav-content">
             <div class="nav-left">
@@ -63,6 +78,14 @@
                         </ul>
                     </div>
                 </div>
+
+                <button class="hamburger-btn" id="hamburgerBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>

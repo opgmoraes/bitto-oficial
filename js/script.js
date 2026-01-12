@@ -10,6 +10,14 @@ const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const themeToggle = document.getElementById('themeToggle');
 
+// MENU MOBILE
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+const closeMenuBtn = document.getElementById('closeMenuBtn');
+const mobileConfigBtn = document.getElementById('mobileConfigBtn');
+const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+
 // --- 1. AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -120,6 +128,34 @@ function updateGreeting(name) {
         greetingElement.innerText = `${greeting}, ${name}! 👋`;
     }
 }
+
+// LÓGICA DO MENU MOBILE
+function toggleMobileMenu() {
+    mobileMenu.classList.toggle('active');
+    mobileMenuOverlay.classList.toggle('active');
+}
+
+if(hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileMenu);
+if(closeMenuBtn) closeMenuBtn.addEventListener('click', toggleMobileMenu);
+if(mobileMenuOverlay) mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+
+// Conectar botão de configurações do mobile ao modal
+if(mobileConfigBtn) {
+    mobileConfigBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleMobileMenu(); // Fecha o menu
+        openSettings(); // Abre modal
+    });
+}
+// Conectar botão de sair do mobile ao modal
+if(mobileLogoutBtn) {
+    mobileLogoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleMobileMenu();
+        openLogoutModal();
+    });
+}
+
 
 // Configurações e Logout
 const settingsModal = document.getElementById('settingsModal');
