@@ -109,7 +109,7 @@ h1 {
 .tool-card:hover { transform: translateY(-5px); border-color: var(--primary); }
 .tool-icon { font-size: 2.5rem; display: block; margin-bottom: 15px; }
 
-/* --- VÍDEOS (Corrigido) --- */
+/* --- VÍDEOS --- */
 .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
 .video-card { text-align: center; }
 .video-card h4 { font-family: var(--font-heading); margin-bottom: 15px; color: var(--primary); }
@@ -141,7 +141,7 @@ h1 {
 .btn-plan-basic { background: #f1f5f9; color: var(--dark); padding: 1rem; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 700; display: block; }
 .btn-plan-feature { background: var(--accent); color: var(--dark); padding: 1rem; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 800; display: block; }
 
-/* --- FAQ (Corrigido) --- */
+/* --- FAQ --- */
 .faq-wrapper { max-width: 800px; margin: 0 auto; }
 .faq-item { background: white; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); overflow: hidden; }
 .faq-item.active { border-color: var(--primary); }
@@ -155,17 +155,33 @@ h1 {
 .faq-icon-box { width: 30px; height: 30px; background: #f0f0ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
 .faq-item.active .faq-icon-box { transform: rotate(45deg); background: var(--primary); color: white; }
 
-/* --- FOOTER --- */
+/* --- FOOTER (Corrigido e Completo) --- */
 .final-cta { background: var(--primary); color: white; padding: 80px 8%; text-align: center; border-radius: 60px 60px 0 0; }
 .btn-cta-large { background: var(--accent); color: var(--dark); padding: 1.2rem 3rem; font-weight: 900; border-radius: 12px; text-decoration: none; display: inline-block; margin-top: 20px; }
+
 footer { background: var(--dark); color: white; padding: 60px 8% 40px; }
-.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; }
+
+/* Ajustado para 4 Colunas */
+.footer-grid { 
+    display: grid; 
+    grid-template-columns: 1.5fr 1fr 1fr 1fr; 
+    gap: 40px; 
+    max-width: 1400px; 
+    margin: 0 auto; 
+}
+
+.logo-footer { color: white; margin-bottom: 1rem; display: block; font-size: 1.5rem; }
+.footer-col h4 { font-family: var(--font-heading); margin-bottom: 1.2rem; color: var(--accent); font-size: 1.1rem; }
+.footer-col p { font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6; }
 .footer-col ul { list-style: none; }
-.footer-col ul li a { color: rgba(255,255,255,0.7); text-decoration: none; }
+.footer-col ul li { margin-bottom: 12px; }
+.footer-col ul li a { color: rgba(255,255,255,0.7); text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+.footer-col ul li a:hover { color: var(--white); color: var(--accent); }
+.copyright { opacity: 0.5; font-size: 0.8rem; margin-top: 2rem; }
 
 /* --- MOBILE (RESPONSIVIDADE) --- */
 @media (max-width: 900px) {
-    /* Menu Mobile simplificado para conversão */
+    /* Menu Mobile simplificado */
     .nav-links { display: none; } 
     .nav-container { padding: 1rem 5%; }
     
@@ -176,7 +192,10 @@ footer { background: var(--dark); color: white; padding: 60px 8% 40px; }
     
     .dual-cards-container { grid-template-columns: 1fr; }
     .price-card.featured { transform: scale(1); }
-    .footer-grid { grid-template-columns: 1fr; text-align: center; }
+    
+    /* Footer Mobile empilhado */
+    .footer-grid { grid-template-columns: 1fr; text-align: center; gap: 30px; }
+    .logo-footer { margin-bottom: 0.5rem; }
     
     h1 { font-size: 2.5rem; }
 }
