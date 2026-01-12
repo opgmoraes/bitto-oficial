@@ -1,49 +1,40 @@
-export const config = {
-    runtime: 'edge',
-};
+// Arquivo: api/chat.js
+export default async function handler(req, res) {
+    // 1. Configuração de CORS
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
-export default async function handler(req) {
     if (req.method === 'OPTIONS') {
-        return new Response(null, {
-            status: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-            },
-        });
+        res.status(200).end();
+        return;
     }
 
-    if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Método não permitido' }), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json' }
-        });
+    // Usando a variável do CHAT
+    const apiKey = process.env.GEMINI_API_CHAT;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Chave de API do Chat não configurada.' });
     }
+
+    const { contents, model } = req.body;
+    
+    // Define o modelo padrão como o flash 2.0 (igual ao seu exemplo)
+    // Se der erro 404, troque aqui para "gemini-1.5-flash"
+    const modelName = model || "gemini-2.0-flash"; 
 
     try {
-        const { contents } = await req.json();
-        const apiKey = process.env.GEMINI_API_CHAT;
-
-        if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Chave GEMINI_API_CHAT não configurada na Vercel.' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // --- MODELO ATUALIZADO ---
-        // Usando o Gemini 2.0 Flash Lite (Preview)
-        // Se este der 404, volte para 'gemini-1.5-flash'
-        const modelName = "gemini-2.0-flash-lite-preview-02-05";
-
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    contents: contents,
+                    contents,
                     safetySettings: [
                         { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
                         { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -55,33 +46,16 @@ export default async function handler(req) {
         );
 
         const data = await googleResponse.json();
-        
-        // Repassa o status real do Google
+
+        // Se o Google der erro (ex: 429 ou 400), repassa para o front saber
         if (!googleResponse.ok) {
-            return new Response(JSON.stringify(data), {
-                status: googleResponse.status, 
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*' 
-                }
-            });
+            return res.status(googleResponse.status).json(data);
         }
-        
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*' 
-            }
-        });
+
+        res.status(200).json(data);
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*' 
-            }
-        });
+        console.error("Erro no Backend:", error);
+        res.status(500).json({ error: 'Erro interno ao processar solicitação.' });
     }
 }
