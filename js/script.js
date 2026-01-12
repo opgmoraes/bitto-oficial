@@ -10,7 +10,7 @@ const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const themeToggle = document.getElementById('themeToggle');
 
-// Histórico da conversa para manter o contexto
+// Histórico da conversa
 let chatHistory = [
     {
         role: "user",
@@ -30,7 +30,6 @@ onAuthStateChanged(auth, async (user) => {
         const emailInput = document.getElementById('settingsEmailInput');
         if(emailInput) emailInput.value = user.email;
 
-        // LISTENER REAL-TIME
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 updateInterface(user, docSnapshot.data());
@@ -298,40 +297,35 @@ async function handleSend() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // 1. Adiciona msg do usuário na tela e no histórico
     addMessage(text, 'user');
     chatHistory.push({ role: "user", parts: [{ text: text }] });
     chatInput.value = '';
 
-    // 2. Mostra "Digitando..."
     const loadingId = addLoadingMessage();
 
     try {
-        // 3. Chama a API
         const response = await callGeminiChat(chatHistory);
-        
-        // Remove o loading
         removeLoadingMessage(loadingId);
 
         if (response) {
             const botText = response;
-            // Adiciona resposta na tela e no histórico
             addMessage(botText, 'bot');
             chatHistory.push({ role: "model", parts: [{ text: botText }] });
         } else {
-            addMessage("Desculpe, tive um problema de conexão. Tente novamente.", 'bot');
+            // Mensagem amigável caso a IA não responda
+            addMessage("Ops! Não consegui entender ou fui bloqueado. Tente perguntar de outra forma.", 'bot');
         }
     } catch (error) {
         removeLoadingMessage(loadingId);
         console.error(error);
-        addMessage("Erro ao conectar com o Bitto. Verifique sua internet.", 'bot');
+        addMessage("Erro de conexão. Verifique se sua internet está ok.", 'bot');
     }
 }
 
-// Função que chama o Backend Vercel
+// CORREÇÃO CRÍTICA AQUI 👇
 async function callGeminiChat(history) {
     try {
-        const res = await fetch('/api/generatechat', {
+        const res = await fetch('/api/generateChat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: history })
@@ -339,17 +333,27 @@ async function callGeminiChat(history) {
 
         const data = await res.json();
         
+        // Log para você ver o erro real no console do navegador (F12)
+        console.log("Resposta da API:", data);
+
         if (!res.ok) throw new Error(data.error || "Erro na API");
 
-        // Extrai o texto da resposta do Gemini
+        // VERIFICAÇÃO DE SEGURANÇA: Se 'candidates' não existe, evitamos o erro "reading '0'"
+        if (!data.candidates || data.candidates.length === 0) {
+            if (data.promptFeedback) {
+                console.warn("Bloqueio de Segurança:", data.promptFeedback);
+                return "Desculpe, minha diretriz de segurança impediu essa resposta. 🛑";
+            }
+            throw new Error("Resposta da IA veio vazia.");
+        }
+
         return data.candidates[0].content.parts[0].text;
     } catch (error) {
         console.error("Erro no Chat:", error);
-        return null;
+        return null; // Retorna nulo para o handleSend tratar
     }
 }
 
-// Adiciona listener nos botões
 if(sendBtn) sendBtn.addEventListener('click', handleSend);
 if(chatInput) chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 
@@ -358,7 +362,6 @@ function addMessage(text, type) {
     messageDiv.className = `message message-${type}`;
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
-    // Formatação simples de Negrito (**texto**) para HTML (<b>texto</b>)
     const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
     let contentHtml = type === 'bot' 
