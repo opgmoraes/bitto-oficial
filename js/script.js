@@ -331,7 +331,7 @@ async function handleSend() {
 // Função que chama o Backend Vercel
 async function callGeminiChat(history) {
     try {
-        const res = await fetch('/api/generateChat', {
+        const res = await fetch('/api/generatechat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: history })
