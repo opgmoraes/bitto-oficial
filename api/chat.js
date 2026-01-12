@@ -14,18 +14,18 @@ export default async function handler(req, res) {
         return;
     }
 
-    // Usando a variável do CHAT
     const apiKey = process.env.GEMINI_API_CHAT;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'Chave de API do Chat não configurada.' });
     }
 
-    const { contents, model } = req.body;
+    const { contents } = req.body;
     
-    // Define o modelo padrão como o flash 2.0 (igual ao seu exemplo)
-    // Se der erro 404, troque aqui para "gemini-1.5-flash"
-    const modelName = model || "gemini-2.0-flash"; 
+    // --- CORREÇÃO AQUI ---
+    // O erro 429 (limit: 0) acontece porque o Gemini 2.0 ainda está restrito.
+    // Mudamos para 'gemini-1.5-flash' que é a versão estável e tem cota liberada.
+    const modelName = "gemini-1.5-flash"; 
 
     try {
         const googleResponse = await fetch(
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
         const data = await googleResponse.json();
 
-        // Se o Google der erro (ex: 429 ou 400), repassa para o front saber
+        // Se o Google der erro, repassa para o front saber o motivo
         if (!googleResponse.ok) {
             return res.status(googleResponse.status).json(data);
         }
