@@ -1,27 +1,38 @@
-// Gerenciamento dos Depoimentos (Personas)
+// JS do Depoimento (Troca os cards automaticamente)
 let currentPair = 0;
 const totalPairs = 2;
 const cards = document.querySelectorAll('.persona-card');
 
 function switchPersonas() {
+    // Remove a classe active de todos
     cards.forEach(c => c.classList.remove('active'));
+    
+    // Calcula o próximo par
     currentPair = (currentPair + 1) % totalPairs;
-    document.querySelectorAll(`.persona-card[data-pair="${currentPair}"]`).forEach(c => c.classList.add('active'));
+    
+    // Adiciona active apenas no par atual
+    document.querySelectorAll(`.persona-card[data-pair="${currentPair}"]`).forEach(c => {
+        c.classList.add('active');
+    });
 }
 
-setInterval(switchPersonas, 7000);
+// Troca a cada 5 segundos
+setInterval(switchPersonas, 5000);
 
-// Gerenciamento do FAQ (Acordeão)
-document.querySelectorAll('.faq-question').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const item = btn.parentElement;
-        const isActive = item.classList.contains('active');
+
+// JS do FAQ (Abre e fecha perguntas)
+document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+        const faqItem = button.parentElement;
         
-        // Fecha todos os outros itens antes de abrir o novo
-        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-        
-        if (!isActive) {
-            item.classList.add('active');
-        }
+        // Fecha outros itens abertos (efeito sanfona)
+        document.querySelectorAll('.faq-item').forEach(item => {
+            if (item !== faqItem) {
+                item.classList.remove('active');
+            }
+        });
+
+        // Alterna o estado do item clicado
+        faqItem.classList.toggle('active');
     });
 });
