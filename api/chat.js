@@ -1,10 +1,10 @@
-// Configura para rodar no Edge (mais rápido e compatível)
+// api/chat.js
 export const config = {
     runtime: 'edge',
 };
 
 export default async function handler(req) {
-    // 1. Tratamento de CORS (Para permitir que o front chame a API)
+    // 1. Configuração de CORS (Permite que seu site acesse a API)
     if (req.method === 'OPTIONS') {
         return new Response(null, {
             status: 200,
@@ -16,7 +16,6 @@ export default async function handler(req) {
         });
     }
 
-    // 2. Apenas aceita POST
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Método não permitido' }), {
             status: 405,
@@ -25,20 +24,16 @@ export default async function handler(req) {
     }
 
     try {
-        // 3. Pega os dados do Frontend
         const { contents } = await req.json();
-        
-        // 4. Pega a chave da Vercel (Environment Variables)
         const apiKey = process.env.GEMINI_API_CHAT;
 
         if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Chave de API (GEMINI_API_CHAT) não configurada na Vercel.' }), {
+            return new Response(JSON.stringify({ error: 'Chave de API não configurada na Vercel.' }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // 5. Chama o Google Gemini
         const googleResponse = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
             {
@@ -58,7 +53,6 @@ export default async function handler(req) {
 
         const data = await googleResponse.json();
         
-        // 6. Devolve a resposta para o seu site
         return new Response(JSON.stringify(data), {
             status: 200,
             headers: { 
