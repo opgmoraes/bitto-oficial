@@ -325,7 +325,7 @@ async function handleSend() {
 // CORREÇÃO CRÍTICA AQUI 👇
 async function callGeminiChat(history) {
     try {
-        const res = await fetch('/api/generateChat', {
+        const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: history })
