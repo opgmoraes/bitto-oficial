@@ -1,6 +1,6 @@
 // Arquivo: api/chat.js
 export default async function handler(req, res) {
-    // 1. Configuração de CORS
+    // 1. Configuração de CORS (Permite acesso do seu site)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -14,7 +14,8 @@ export default async function handler(req, res) {
         return;
     }
 
-    // Usa a chave do CHAT (ou a geral se não tiver a do chat)
+    // 2. Busca a Chave de API
+    // Tenta a chave específica do Chat, se não achar, usa a geral
     const apiKey = process.env.GEMINI_API_CHAT || process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -22,13 +23,17 @@ export default async function handler(req, res) {
     }
 
     const { contents } = req.body;
-    
-    // --- MUDANÇA: USANDO O MODELO LITE (MAIS LEVE E GRATUITO) ---
-    // Segundo sua documentação, este é otimizado para "high throughput"
-    const modelName = "gemini-2.5-flash-lite"; 
 
-    try {
-        const googleResponse = await fetch(
+    // 3. ESTRATÉGIA DE REDUNDÂNCIA (FAILOVER)
+    // Tenta o modelo rápido primeiro. Se der erro de limite (429), pula para o estável.
+    // O 'gemini-2.5-flash-lite' é otimizado para volume.
+    // O 'gemini-1.5-flash' é o backup estável.
+    const models = ["gemini-2.5-flash-lite", "gemini-1.5-flash"];
+
+    // Função auxiliar para tentar chamar a API
+    async function tryModel(modelName) {
+        console.log(`[Backend] Tentando modelo: ${modelName}...`);
+        const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
@@ -44,18 +49,33 @@ export default async function handler(req, res) {
                 })
             }
         );
+        return response;
+    }
+
+    try {
+        // TENTATIVA 1: Modelo Principal (Lite)
+        let googleResponse = await tryModel(models[0]);
+
+        // Se der erro 429 (Limite Excedido) ou 503 (Serviço Indisponível), tenta o Backup
+        if (googleResponse.status === 429 || googleResponse.status === 503) {
+            console.warn(`⚠️ Modelo ${models[0]} falhou (${googleResponse.status}). Ativando Backup...`);
+            
+            // TENTATIVA 2: Modelo Backup (1.5 Flash)
+            googleResponse = await tryModel(models[1]);
+        }
 
         const data = await googleResponse.json();
 
+        // Se ainda assim der erro (nos dois modelos), repassa o erro para o front
         if (!googleResponse.ok) {
-            // Se der erro 429 aqui, o servidor avisa o front
             return res.status(googleResponse.status).json(data);
         }
 
+        // Sucesso!
         res.status(200).json(data);
 
     } catch (error) {
-        console.error("Erro no Backend:", error);
+        console.error("❌ Erro Crítico no Backend:", error);
         res.status(500).json({ error: 'Erro interno ao processar solicitação.' });
     }
 }

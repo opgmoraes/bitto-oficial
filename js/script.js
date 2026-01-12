@@ -45,6 +45,7 @@ onAuthStateChanged(auth, async (user) => {
 
     } else {
         // Redireciona para o login se não estiver autenticado
+        // Ajuste o caminho conforme a estrutura da sua pasta
         window.location.href = '../index.html';
     }
 });
@@ -304,7 +305,7 @@ function typeWriter(text, i) {
 document.addEventListener('DOMContentLoaded', () => { typeWriter("Oi! Sou o Bitto. Vamos evoluir juntos?", 0); });
 
 // ==========================================
-// 6. CHATBOT IA (INTEGRAÇÃO API)
+// 6. CHATBOT IA (INTEGRAÇÃO OTIMIZADA)
 // ==========================================
 window.sendChip = (text) => { if(chatInput) { chatInput.value = text; handleSend(); } }
 
@@ -312,7 +313,34 @@ async function handleSend() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // Adiciona msg do usuário
+    // --- 🛡️ BLINDAGEM: TIMER DE 15s (EVITA SPAM) ---
+    if (sendBtn.disabled) return; 
+
+    // 1. Trava Interface
+    sendBtn.disabled = true;
+    chatInput.disabled = true;
+    const originalBtnText = sendBtn.innerText;
+    
+    // 2. Inicia Contagem Regressiva
+    let timeLeft = 15;
+    sendBtn.innerText = `⏳ ${timeLeft}`;
+    
+    const timer = setInterval(() => {
+        timeLeft--;
+        sendBtn.innerText = `⏳ ${timeLeft}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            // Destrava
+            sendBtn.disabled = false;
+            chatInput.disabled = false;
+            sendBtn.innerText = originalBtnText || "→"; 
+            chatInput.focus();
+        }
+    }, 1000);
+    // ----------------------------------------------
+
+    // Adiciona msg do usuário na tela
     addMessage(text, 'user');
     chatHistory.push({ role: "user", parts: [{ text: text }] });
     chatInput.value = '';
@@ -321,28 +349,30 @@ async function handleSend() {
     const loadingId = addLoadingMessage();
 
     try {
-        const botText = await callGeminiChat(chatHistory);
+        // Envia apenas as últimas 10 interações para economizar tokens
+        const recentHistory = chatHistory.slice(-10);
+        
+        const botText = await callGeminiChat(recentHistory);
         removeLoadingMessage(loadingId);
 
         if (botText) {
             addMessage(botText, 'bot');
             chatHistory.push({ role: "model", parts: [{ text: botText }] });
         } else {
-            addMessage("Desculpe, tive um problema na conexão. Tente novamente. 🔌", 'bot');
+            addMessage("O Bitto piscou aqui. Tente de novo! 🔌", 'bot');
         }
     } catch (error) {
         removeLoadingMessage(loadingId);
         console.error(error);
-        addMessage("Erro de conexão.", 'bot');
+        addMessage("Muitos estudantes online agora! 🤯 O Bitto precisa de um café. Tente em 30s.", 'bot');
     }
 }
 
 // ------------------------------------------
-// FUNÇÃO CRÍTICA: Chamada para a API Vercel
+// CHAMADA API (COM FALLBACK NO BACKEND)
 // ------------------------------------------
 async function callGeminiChat(history) {
     try {
-        // [IMPORTANTE] Caminho deve ser exatamente /api/chat
         const res = await fetch('/api/chat', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -351,30 +381,23 @@ async function callGeminiChat(history) {
 
         const data = await res.json();
         
-        // Debug detalhado no Console (F12)
-        console.log("STATUS API:", res.status);
-        console.log("RESPOSTA COMPLETA:", JSON.stringify(data, null, 2));
+        // Debug para você acompanhar qual modelo respondeu (opcional)
+        console.log("RESPOSTA API:", data);
 
         if (!res.ok) {
-            // Tenta pegar a mensagem de erro detalhada do Google ou do Backend
             const errorMsg = data.error?.message || JSON.stringify(data);
             throw new Error(`Erro API (${res.status}): ${errorMsg}`);
         }
 
-        // Verifica se a resposta tem o conteúdo esperado (candidates)
         if (!data.candidates || data.candidates.length === 0) {
-            if (data.promptFeedback) {
-                console.warn("Bloqueio de Segurança:", data.promptFeedback);
-                return "Minha diretriz de segurança bloqueou essa resposta. Tente perguntar de outra forma.";
-            }
-            throw new Error("Resposta da IA veio vazia (sem candidates).");
+            return "Minha diretriz de segurança bloqueou essa resposta. Tente perguntar de outra forma.";
         }
 
         return data.candidates[0].content.parts[0].text;
 
     } catch (error) {
         console.error("❌ ERRO NO CHAT:", error);
-        return null; // Retorna null para o handleSend tratar
+        throw error; // Repassa erro para cair no catch do handleSend
     }
 }
 
@@ -389,7 +412,6 @@ function addMessage(text, type) {
     // Formata negrito **texto** -> <b>texto</b>
     const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
-    // Imagens: usam '../' para sair da pasta pages/
     let contentHtml = type === 'bot' 
         ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="../imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${formattedText}<span class="message-time">${time}</span></div>` 
         : `<div class="message-bubble">${formattedText}<span class="message-time">${time}</span></div>`;
