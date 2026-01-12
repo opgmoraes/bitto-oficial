@@ -32,9 +32,13 @@ export default async function handler(req) {
             });
         }
 
-        // CORREÇÃO: Usando 'gemini-1.5-flash-latest' que é mais garantido de ser encontrado
+        // --- MODELO ATUALIZADO ---
+        // Usando o Gemini 2.0 Flash Lite (Preview)
+        // Se este der 404, volte para 'gemini-1.5-flash'
+        const modelName = "gemini-2.0-flash-lite-preview-02-05";
+
         const googleResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -52,7 +56,7 @@ export default async function handler(req) {
 
         const data = await googleResponse.json();
         
-        // Se der erro no Google, repassa o erro detalhado
+        // Repassa o status real do Google
         if (!googleResponse.ok) {
             return new Response(JSON.stringify(data), {
                 status: googleResponse.status, 
