@@ -4,25 +4,29 @@ import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/1
 import { db } from './firebase-init.js';
 import { checkMonthlyReset, calculateLevel } from './xpSystem.js';
 
-// ELEMENTOS UI
+// ==========================================
+// 1. ELEMENTOS UI E INICIALIZAÇÃO
+// ==========================================
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const themeToggle = document.getElementById('themeToggle');
 
-// Histórico da conversa
+// Histórico da conversa (Contexto da IA)
 let chatHistory = [
     {
         role: "user",
-        parts: [{ text: "Você é o Bitto, um assistente de estudos universitário inteligente, motivador e direto. Suas respostas devem ser curtas e úteis. Use emojis ocasionalmente." }]
+        parts: [{ text: "Você é o Bitto, um assistente de estudos universitário inteligente, motivador e direto. Suas respostas devem ser curtas e úteis. Use emojis ocasionalmente para deixar o papo leve." }]
     },
     {
         role: "model",
-        parts: [{ text: "Entendido! Sou o Bitto. Como posso ajudar nos seus estudos hoje? 🚀" }]
+        parts: [{ text: "Entendido! Sou o Bitto. Vamos dominar os estudos juntos? 🚀" }]
     }
 ];
 
-// --- 1. AUTENTICAÇÃO ---
+// ==========================================
+// 2. AUTENTICAÇÃO E DADOS
+// ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         await checkMonthlyReset(user);
@@ -30,6 +34,7 @@ onAuthStateChanged(auth, async (user) => {
         const emailInput = document.getElementById('settingsEmailInput');
         if(emailInput) emailInput.value = user.email;
 
+        // Listener em Tempo Real (Firestore)
         onSnapshot(doc(db, "users", user.uid), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 updateInterface(user, docSnapshot.data());
@@ -39,17 +44,18 @@ onAuthStateChanged(auth, async (user) => {
         setupSettingsSave(user);
 
     } else {
+        // Redireciona para o login se não estiver autenticado
         window.location.href = '../index.html';
     }
 });
 
-// --- 2. ATUALIZA INTERFACE ---
 function updateInterface(user, dbData) {
     const currentXP = dbData.xp || 0;
     const levelData = calculateLevel(currentXP);
     const displayName = dbData.displayName || user.displayName || "Estudante";
     const firstName = displayName.split(' ')[0];
 
+    // Atualiza Textos
     document.getElementById('navUserName').innerText = firstName;
     document.getElementById('ddUserName').innerText = displayName;
     document.getElementById('userXP').innerText = currentXP;
@@ -57,9 +63,9 @@ function updateInterface(user, dbData) {
     document.getElementById('ddLevel').innerText = `Nível ${levelData.level}`;
     document.getElementById('mascotLevelText').innerText = `Nível ${levelData.level}`;
 
+    // Card de Estatísticas
     const stats = dbData.stats || {};
     const generatedCount = stats.cardsGeneratedMonth || 0;
-    
     const generatedCountEl = document.getElementById('generatedCount');
     const generatedDetailsEl = document.getElementById('generatedDetails');
     
@@ -68,11 +74,9 @@ function updateInterface(user, dbData) {
         if(generatedCount > 50) generatedCountEl.style.color = "var(--accent-green)";
         else generatedCountEl.style.color = "var(--primary-blue)";
     }
-    
-    if(generatedDetailsEl) {
-        generatedDetailsEl.innerText = "Criados este mês";
-    }
+    if(generatedDetailsEl) generatedDetailsEl.innerText = "Criados este mês";
 
+    // Barra de XP
     let range = levelData.limit - levelData.min;
     let progress = currentXP - levelData.min;
     let percentage = Math.max(0, Math.min(100, (progress / range) * 100));
@@ -82,6 +86,7 @@ function updateInterface(user, dbData) {
     updateGreeting(firstName);
     updateMascotImage(currentXP);
 
+    // Avatar do Usuário
     const photoURL = dbData.photoURL || user.photoURL;
     if (photoURL) {
         document.querySelectorAll('.avatar-circle, .avatar-placeholder-large').forEach(el => {
@@ -100,6 +105,7 @@ function updateInterface(user, dbData) {
 function updateMascotImage(xp) {
     const mascotImg = document.getElementById('mascotImage');
     if (!mascotImg) return;
+    
     let imageName = 'bittinho-0';
     if (xp >= 5800) imageName = 'bittinho-5800'; 
     else if (xp >= 4200) imageName = 'bittinho-4200';
@@ -126,7 +132,9 @@ function updateGreeting(name) {
     }
 }
 
-// --- MENU MOBILE ---
+// ==========================================
+// 3. MENU MOBILE & NAVEGAÇÃO
+// ==========================================
 const hamburgerBtn = document.getElementById('hamburgerBtn');
 const mobileMenu = document.getElementById('mobileMenu');
 const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
@@ -158,7 +166,9 @@ if(mobileLogoutBtn) {
     });
 }
 
-// --- CONFIGURAÇÕES E LOGOUT ---
+// ==========================================
+// 4. CONFIGURAÇÕES E LOGOUT
+// ==========================================
 const settingsModal = document.getElementById('settingsModal');
 const navConfigBtn = document.getElementById('navConfigBtn');
 const ddAccountBtn = document.getElementById('ddAccountBtn');
@@ -235,7 +245,14 @@ if(acceptConfirmBtn) acceptConfirmBtn.addEventListener('click', async () => {
     window.location.href = '../index.html'; 
 });
 
-// --- UI TILT E TEMA ---
+const profileDropdown = document.getElementById('profileDropdown');
+const profileBtn = document.getElementById('profileBtn');
+if(profileBtn) profileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
+document.addEventListener('click', () => { if(profileDropdown) profileDropdown.classList.remove('active'); });
+
+// ==========================================
+// 5. VISUAIS (Tilt, Tema, Typewriter)
+// ==========================================
 const tiltElements = document.querySelectorAll('.tilt-element');
 document.addEventListener('mousemove', (e) => {
     if(window.innerWidth > 900) {
@@ -264,21 +281,17 @@ themeToggle.addEventListener('click', () => {
     localStorage.setItem('bitto_theme', newTheme);
     updateThemeIcons(newTheme);
 });
+
 function updateThemeIcons(theme) {
     const sun = document.querySelector('.icon-sun');
     const moon = document.querySelector('.icon-moon');
     if(theme === 'dark') { sun.style.display = 'none'; moon.style.display = 'block'; } 
     else { sun.style.display = 'block'; moon.style.display = 'none'; }
 }
+
 if(localStorage.getItem('bitto_theme') === 'dark') updateThemeIcons('dark');
 else updateThemeIcons('light');
 
-const profileDropdown = document.getElementById('profileDropdown');
-const profileBtn = document.getElementById('profileBtn');
-if(profileBtn) profileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
-document.addEventListener('click', () => { if(profileDropdown) profileDropdown.classList.remove('active'); });
-
-// --- MÁQUINA DE ESCREVER ---
 function typeWriter(text, i) {
     if (i < (text.length)) {
         const target = document.getElementById("typewriterText");
@@ -290,42 +303,47 @@ function typeWriter(text, i) {
 }
 document.addEventListener('DOMContentLoaded', () => { typeWriter("Oi! Sou o Bitto. Vamos evoluir juntos?", 0); });
 
-// --- LÓGICA DO CHAT AI (BITTO ASSISTANT) ---
+// ==========================================
+// 6. CHATBOT IA (INTEGRAÇÃO API)
+// ==========================================
 window.sendChip = (text) => { if(chatInput) { chatInput.value = text; handleSend(); } }
 
 async function handleSend() {
     const text = chatInput.value.trim();
     if (!text) return;
 
+    // Adiciona msg do usuário
     addMessage(text, 'user');
     chatHistory.push({ role: "user", parts: [{ text: text }] });
     chatInput.value = '';
 
+    // Mostra loading
     const loadingId = addLoadingMessage();
 
     try {
-        const response = await callGeminiChat(chatHistory);
+        const botText = await callGeminiChat(chatHistory);
         removeLoadingMessage(loadingId);
 
-        if (response) {
-            const botText = response;
+        if (botText) {
             addMessage(botText, 'bot');
             chatHistory.push({ role: "model", parts: [{ text: botText }] });
         } else {
-            // Mensagem amigável caso a IA não responda
-            addMessage("Ops! Não consegui entender ou fui bloqueado. Tente perguntar de outra forma.", 'bot');
+            addMessage("Desculpe, tive um problema na conexão. Tente novamente. 🔌", 'bot');
         }
     } catch (error) {
         removeLoadingMessage(loadingId);
         console.error(error);
-        addMessage("Erro de conexão. Verifique se sua internet está ok.", 'bot');
+        addMessage("Erro de conexão.", 'bot');
     }
 }
 
-// CORREÇÃO CRÍTICA AQUI 👇
+// ------------------------------------------
+// FUNÇÃO CRÍTICA: Chamada para a API Vercel
+// ------------------------------------------
 async function callGeminiChat(history) {
     try {
-        const res = await fetch('/api/chat', {
+        // [IMPORTANTE] Caminho deve ser exatamente /api/chat
+        const res = await fetch('/api/chat', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: history })
@@ -333,24 +351,30 @@ async function callGeminiChat(history) {
 
         const data = await res.json();
         
-        // Log para você ver o erro real no console do navegador (F12)
-        console.log("Resposta da API:", data);
+        // Debug detalhado no Console (F12)
+        console.log("STATUS API:", res.status);
+        console.log("RESPOSTA COMPLETA:", JSON.stringify(data, null, 2));
 
-        if (!res.ok) throw new Error(data.error || "Erro na API");
+        if (!res.ok) {
+            // Tenta pegar a mensagem de erro detalhada do Google ou do Backend
+            const errorMsg = data.error?.message || JSON.stringify(data);
+            throw new Error(`Erro API (${res.status}): ${errorMsg}`);
+        }
 
-        // VERIFICAÇÃO DE SEGURANÇA: Se 'candidates' não existe, evitamos o erro "reading '0'"
+        // Verifica se a resposta tem o conteúdo esperado (candidates)
         if (!data.candidates || data.candidates.length === 0) {
             if (data.promptFeedback) {
                 console.warn("Bloqueio de Segurança:", data.promptFeedback);
-                return "Desculpe, minha diretriz de segurança impediu essa resposta. 🛑";
+                return "Minha diretriz de segurança bloqueou essa resposta. Tente perguntar de outra forma.";
             }
-            throw new Error("Resposta da IA veio vazia.");
+            throw new Error("Resposta da IA veio vazia (sem candidates).");
         }
 
         return data.candidates[0].content.parts[0].text;
+
     } catch (error) {
-        console.error("Erro no Chat:", error);
-        return null; // Retorna nulo para o handleSend tratar
+        console.error("❌ ERRO NO CHAT:", error);
+        return null; // Retorna null para o handleSend tratar
     }
 }
 
@@ -362,8 +386,10 @@ function addMessage(text, type) {
     messageDiv.className = `message message-${type}`;
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
+    // Formata negrito **texto** -> <b>texto</b>
     const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
+    // Imagens: usam '../' para sair da pasta pages/
     let contentHtml = type === 'bot' 
         ? `<div class="header-avatar" style="border:none; background: transparent; flex-shrink:0;"><div class="header-avatar" style="width:32px; height:32px;"><img src="../imagens/bittochat.png" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div></div><div class="message-bubble">${formattedText}<span class="message-time">${time}</span></div>` 
         : `<div class="message-bubble">${formattedText}<span class="message-time">${time}</span></div>`;
