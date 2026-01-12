@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
     // 2. Busca a Chave de API
     // Tenta a chave específica do Chat, se não achar, usa a geral
-    const apiKey = process.env.GEMINI_API_CHAT || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_CHAT || process.env.GEMINI_API_CHAT;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'Chave de API não configurada.' });
