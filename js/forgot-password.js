@@ -1,11 +1,46 @@
-// Arquivo: js/forgot-password.js
 import { auth } from './firebase-init.js';
+// Importação direta do CDN para garantir compatibilidade com seu setup atual
 import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const resetForm = document.getElementById('resetForm');
 const themeToggle = document.getElementById('themeToggle');
+const pageTitle = document.getElementById('pageTitle');
+const pageSubtitle = document.getElementById('pageSubtitle');
+const submitBtn = document.getElementById('submitBtn');
+const tabBtns = document.querySelectorAll('.tab-btn');
+const emailInput = document.getElementById('resetEmail');
 
-// --- TEMA (Mesma lógica do Login) ---
+// Estado inicial
+let currentMode = 'forgot';
+
+// --- CONTROLE DAS ABAS ---
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Atualiza classe active
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Atualiza modo e interface
+        currentMode = btn.dataset.mode;
+        updateUI();
+    });
+});
+
+function updateUI() {
+    if (currentMode === 'activate') {
+        pageTitle.innerText = "Ativar Conta";
+        pageSubtitle.innerText = "Defina sua senha para acessar o plano.";
+        submitBtn.innerText = "ENVIAR LINK DE ATIVAÇÃO";
+        emailInput.placeholder = "E-mail usado na compra";
+    } else {
+        pageTitle.innerText = "Recuperar Senha";
+        pageSubtitle.innerText = "Vamos enviar um link para você.";
+        submitBtn.innerText = "ENVIAR LINK DE RECUPERAÇÃO";
+        emailInput.placeholder = "seu@email.com";
+    }
+}
+
+// --- TEMA (Mantido do seu original) ---
 const htmlElement = document.documentElement;
 const sunIcon = document.querySelector('.icon-sun');
 const moonIcon = document.querySelector('.icon-moon');
@@ -15,13 +50,13 @@ if (localStorage.getItem('bitto_theme') === 'dark') setTheme('dark');
 function setTheme(theme) {
     if (theme === 'dark') {
         htmlElement.setAttribute('data-theme', 'dark');
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
+        if(sunIcon) sunIcon.style.display = 'none';
+        if(moonIcon) moonIcon.style.display = 'block';
         localStorage.setItem('bitto_theme', 'dark');
     } else {
         htmlElement.setAttribute('data-theme', 'light');
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
+        if(sunIcon) sunIcon.style.display = 'block';
+        if(moonIcon) moonIcon.style.display = 'none';
         localStorage.setItem('bitto_theme', 'light');
     }
 }
@@ -33,12 +68,11 @@ if(themeToggle) {
     });
 }
 
-// --- LOGICA DE RECUPERAÇÃO ---
+// --- ENVIO DO FORMULÁRIO ---
 resetForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('resetEmail').value;
-    const btn = resetForm.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
+    const email = emailInput.value;
+    const originalText = submitBtn.innerHTML;
 
     if(!email) {
         showToast("Digite seu e-mail.", "error");
@@ -46,16 +80,21 @@ resetForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        btn.innerHTML = '<span class="loader"></span> Enviando...';
-        btn.classList.add('btn-loading');
+        submitBtn.innerHTML = '<span class="loader"></span> Processando...';
+        submitBtn.classList.add('btn-loading');
 
-        // Função mágica do Firebase
+        // Envia o email (funciona tanto para recuperação quanto ativação)
         await sendPasswordResetEmail(auth, email);
 
-        showToast("E-mail enviado! Verifique sua caixa de entrada.", "success");
+        if (currentMode === 'activate') {
+            showToast("Link enviado! Verifique seu e-mail para ativar.", "success");
+        } else {
+            showToast("E-mail de recuperação enviado!", "success");
+        }
         
-        // Limpa o campo e espera um pouco antes de voltar
         resetForm.reset();
+        
+        // Redireciona após 4s
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 4000);
@@ -63,16 +102,22 @@ resetForm.addEventListener('submit', async (e) => {
     } catch (error) {
         console.error(error);
         let msg = "Erro ao enviar e-mail.";
-        if(error.code === 'auth/user-not-found') msg = "E-mail não encontrado.";
+        
+        // Mensagens personalizadas por erro
+        if(error.code === 'auth/user-not-found') {
+            msg = currentMode === 'activate' 
+                ? "E-mail não encontrado. Verifique o e-mail da compra." 
+                : "E-mail não cadastrado.";
+        }
         if(error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+        
         showToast(msg, "error");
         
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-loading');
+        submitBtn.innerHTML = originalText;
+        submitBtn.classList.remove('btn-loading');
     }
 });
 
-// Toast System
 function showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');
     if(!container) {

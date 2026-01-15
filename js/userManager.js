@@ -7,19 +7,20 @@ export async function syncUserDatabase(user) {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
+    // Só cria o plano Free se o usuário NÃO existir.
+    // Se o Webhook já criou (pagamento), isso aqui é pulado, preservando o plano pago.
     if (!userSnap.exists()) {
-        // Novo usuário: Plano FREE padrão
         await setDoc(userRef, {
             email: user.email,
             name: user.displayName || "Estudante",
-            plan: "free", // free, monthly, quarterly
+            plan: "free", 
             subscriptionEnd: null,
             usage: {
                 flashcards: 0,
                 quiz: 0,
                 review: 0
             },
-            lastReset: serverTimestamp() // Data do último reset de cotas
+            lastReset: serverTimestamp() 
         });
     }
 }
@@ -41,37 +42,38 @@ export async function checkUsageLimit(userId, tool) {
     const userData = userSnap.data();
     const now = new Date();
     
-    // 1. Verificar se é PLANO PAGO e se está ATIVO
+    // --- 1. VERIFICAÇÃO DE PLANO PAGO ---
+    // Se não for 'free' e tiver data de fim definida
     if (userData.plan !== 'free' && userData.subscriptionEnd) {
-        const endDate = userData.subscriptionEnd.toDate(); // Converte timestamp firebase
+        const endDate = userData.subscriptionEnd.toDate(); 
+        
+        // Se a data de hoje for anterior ao vencimento, LIBERA TUDO
         if (now < endDate) {
-            return true; // Plano pago ativo = liberado
-        } else {
-            // Plano venceu, volta para free (opcional: atualizar no banco aqui)
-            // Vamos tratar como free abaixo
+            return true; 
         }
+        // Se venceu, o código continua e cai nas regras do plano Free abaixo
     }
 
-    // 2. Lógica do PLANO FREE
-    // Verifica se precisa resetar o contador mensal (virou o mês?)
+    // --- 2. REGRAS DO PLANO FREE ---
+    // Verifica se virou o mês para resetar as cotas
     const lastReset = userData.lastReset ? userData.lastReset.toDate() : new Date(0);
     const isNewMonth = now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear();
 
     if (isNewMonth) {
-        // Reseta contadores se virou o mês
         await updateDoc(userRef, {
             "usage.flashcards": 0,
             "usage.quiz": 0,
             "usage.review": 0,
             lastReset: serverTimestamp()
         });
-        return true; // Liberado pois resetou
+        return true; // Liberado (acabou de resetar)
     }
 
-    // Verifica limite (2 usos)
+    // Verifica limite (Free tem 3 usos por ferramenta)
+    // < 3 permite: 0, 1 e 2. O 3º uso bloqueia.
     const currentUsage = userData.usage?.[tool] || 0;
     
-    if (currentUsage < 2) {
+    if (currentUsage < 3) {
         return true;
     } else {
         return false; // Bloqueado
@@ -83,7 +85,6 @@ export async function checkUsageLimit(userId, tool) {
  */
 export async function incrementUsage(userId, tool) {
     const userRef = doc(db, "users", userId);
-    // Usa notação de ponto para atualizar campo aninhado
     await updateDoc(userRef, {
         [`usage.${tool}`]: increment(1)
     });
