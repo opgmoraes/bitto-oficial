@@ -647,3 +647,78 @@ footer { background: var(--dark); color: white; padding: 80px 8% 20px; }
     .calc-section-dark { margin-top: 20px; padding: 30px 20px; }
     .calc-big-number { font-size: 3rem; }
 }
+
+/* --- NOVO CSS: REGRAS E DESTAQUES (PARCEIRO) --- */
+
+/* Título Neon Pulsante */
+.neon-brand-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 10px 25px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    font-weight: 900;
+    box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);
+    margin-bottom: 25px;
+    display: inline-block;
+    animation: neonPulse 2s infinite alternate;
+}
+
+@keyframes neonPulse {
+    from { box-shadow: 0 0 10px rgba(204, 255, 0, 0.2); }
+    to { box-shadow: 0 0 25px rgba(204, 255, 0, 0.6); transform: scale(1.02); }
+}
+
+/* Seção de Regras (Transparência) */
+.rules-section {
+    max-width: 1000px;
+    margin: 0 auto 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.rule-card {
+    background: rgba(255, 255, 255, 0.03); /* Fundo bem sutil dark */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 25px;
+    border-radius: 16px;
+    transition: 0.3s;
+}
+
+.rule-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.rule-icon { font-size: 1.8rem; margin-bottom: 15px; display: block; }
+
+.rule-title {
+    color: white;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.rule-desc {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Botão Voltar Nav */
+.btn-nav-back {
+    color: var(--text-gray);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+.btn-nav-back:hover { color: var(--primary); transform: translateX(-5px); }

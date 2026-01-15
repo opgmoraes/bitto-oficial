@@ -10,12 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="loading.css"> 
 </head>
-<body style="background-color: var(--bg);">
-
-    <nav>
+<body style="background-color: var(--dark);"> <nav>
         <div class="nav-container">
+            <a href="../index.html" class="btn-nav-back">← Voltar para o Site</a>
+            
             <a href="../index.html" class="logo">BITTO<span>.</span></a>
-            <a href="../pages/login.html" class="btn-back">Fazer Login</a>
+            
+            <a href="../pages/login.html" class="btn-back" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">Login</a>
         </div>
     </nav>
 
@@ -28,7 +29,7 @@
                 <div class="fomo-item">💎 Pedro atingiu o nível <span>Ouro</span></div>
                 <div class="fomo-item">🔥 <span>@med.joao</span> fez sua 1ª venda</div>
                 <div class="fomo-item">💸 Pix Recebido: <span>R$ 45,00</span> por Ana</div>
-                 <div class="fomo-item">🔥 <span>@mari.studies</span> acabou de entrar</div>
+                <div class="fomo-item">🔥 <span>@mari.studies</span> acabou de entrar</div>
                 <div class="fomo-item">💸 Pix Recebido: <span>R$ 130,90</span> por Lucas</div>
             </div>
         </div>
@@ -36,12 +37,11 @@
         <section class="partner-hero-split">
             <div class="hero-split-container">
                 <div class="hero-left">
-                    <span style="color: var(--accent); font-weight: 800; background: rgba(204,255,0,0.1); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--accent); margin-bottom: 20px; display: inline-block;">
-                        👑 COMISSÃO DE 35%
-                    </span>
+                    <div class="neon-brand-title">👑 EMBAIXADORES BITTO</div>
+                    
                     <h1>Sua influência vale <br><span style="color: var(--accent);">PIX NA CONTA</span></h1>
                     <p>
-                        Indique a Bitto para seus seguidores e receba notificações de venda em tempo real. O programa de afiliados mais transparente da educação.
+                        Indique a Bitto para seus seguidores e receba comissões recorrentes. O programa de afiliados mais transparente da educação.
                     </p>
                     <a href="#apply-form" class="btn-banner-link" style="background: var(--accent); color: var(--dark);">QUERO SER EMBAIXADOR</a>
                 </div>
@@ -107,37 +107,68 @@
                 </div>
             </div>
 
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2 style="color: white; font-family: var(--font-heading);">Regras do Jogo</h2>
+                <p style="color: #94a3b8;">Transparência total para uma parceria duradoura.</p>
+            </div>
+
+            <div class="rules-section">
+                <div class="rule-card" style="border-left: 4px solid #ef4444;">
+                    <span class="rule-icon">🚫</span>
+                    <h4 class="rule-title">Zero Apostas/Tigrinho</h4>
+                    <p class="rule-desc">
+                        Não aceitamos parcerias com perfis que divulgam cassinos, jogos de azar ou esquemas fraudulentos. Buscamos criadores sérios focados em educação e lifestyle.
+                    </p>
+                </div>
+
+                <div class="rule-card" style="border-left: 4px solid #22c55e;">
+                    <span class="rule-icon">🔄</span>
+                    <h4 class="rule-title">Recorrência Ativa</h4>
+                    <p class="rule-desc">
+                        Você não ganha apenas na primeira venda. Enquanto o aluno indicado continuar pagando a mensalidade da Bitto, você continua recebendo sua fatia de 35%.
+                    </p>
+                </div>
+
+                <div class="rule-card" style="border-left: 4px solid #f59e0b;">
+                    <span class="rule-icon">⚠️</span>
+                    <h4 class="rule-title">Política de Estorno</h4>
+                    <p class="rule-desc">
+                        Se o cliente solicitar reembolso dentro do prazo legal de 7 dias, a comissão dessa venda será anulada e descontada do seu saldo. Isso garante a saúde financeira do negócio.
+                    </p>
+                </div>
+            </div>
+
             <div class="form-box-clean" id="apply-form">
                 <h2 style="text-align: center; font-family: var(--font-heading); margin-bottom: 30px;">Candidatura VIP</h2>
                 
                 <div style="background: #f0f9ff; border-left: 4px solid var(--primary); padding: 15px; margin-bottom: 25px; border-radius: 8px; font-size: 0.9rem; color: #1e3a8a;">
-                    <strong>ℹ️ Como funciona:</strong> Preencha os dados. Após enviar, você será redirecionado para o Grupo de Onboarding.
+                    <strong>ℹ️ Próximo Passo:</strong> Ao clicar em enviar, seus dados serão analisados e você será redirecionado para o Grupo de Onboarding no WhatsApp.
                 </div>
 
                 <form id="partnerForm">
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="display:block; font-weight:700; margin-bottom:8px;">Nome Completo</label>
-                        <input type="text" name="nome" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="Seu nome">
+                        <input type="text" name="nome" class="form-input" required placeholder="Seu nome">
                     </div>
                     
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="display:block; font-weight:700; margin-bottom:8px;">Email (Chave Pix)</label>
-                        <input type="email" name="email" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="email@exemplo.com">
+                        <input type="email" name="email" class="form-input" required placeholder="email@exemplo.com">
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="display:block; font-weight:700; margin-bottom:8px;">WhatsApp</label>
-                        <input type="tel" name="whatsapp" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="(00) 00000-0000">
+                        <input type="tel" name="whatsapp" class="form-input" required placeholder="(00) 00000-0000">
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="display:block; font-weight:700; margin-bottom:8px;">Instagram/TikTok</label>
-                        <input type="text" name="social" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="@usuario">
+                        <input type="text" name="social" class="form-input" required placeholder="@usuario">
                     </div>
 
                     <div class="form-group" style="margin-bottom: 30px;">
                         <label style="display:block; font-weight:700; margin-bottom:8px;">Média de Views nos Stories</label>
-                        <select name="views" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;">
+                        <select name="views" class="form-input">
                             <option value="Iniciante">- 500 visualizações</option>
                             <option value="Medio">500 a 2.000 visualizações</option>
                             <option value="Alto">+ 2.000 visualizações</option>
@@ -147,6 +178,10 @@
                     <button type="submit" class="btn-main" style="width: 100%; border:none; cursor: pointer; font-size: 1.1rem;">
                         ENVIAR CANDIDATURA 🚀
                     </button>
+                    
+                    <p style="text-align: center; font-size: 0.8rem; color: #94a3b8; margin-top: 15px;">
+                        Ao se cadastrar, você concorda com os termos acima.
+                    </p>
                 </form>
             </div>
         </section>
@@ -158,7 +193,7 @@
     </footer>
 
     <script>
-        // JS DA CALCULADORA (Valor: 13.09)
+        // JS DA CALCULADORA
         const salesRange = document.getElementById('sales-range');
         const displaySales = document.getElementById('display-sales');
         const displayEarnings = document.getElementById('display-earnings');
@@ -182,8 +217,8 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // INSIRA SEU LINK DO GOOGLE APPS SCRIPT AQUI
-            const GOOGLE_SCRIPT_URL = 'SEU_URL_DO_GOOGLE_SCRIPT_AQUI'; 
+            // INSIRA SEU LINK DO GOOGLE SCRIPT AQUI
+            const GOOGLE_SCRIPT_URL = 'SEU_LINK_DO_GOOGLE_SCRIPT_AQUI'; 
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
@@ -192,7 +227,6 @@
                 body: JSON.stringify(data)
             })
             .then(() => {
-                // INSIRA O LINK DO SEU GRUPO DE WHATSAPP AQUI
                 window.location.href = "https://chat.whatsapp.com/SEU_GRUPO";
             })
             .catch(error => {
