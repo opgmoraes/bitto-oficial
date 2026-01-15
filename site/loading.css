@@ -369,112 +369,251 @@ footer { background: var(--dark); color: white; padding: 80px 8% 20px; }
 .money-badge { background: #dcfce7; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 0.75rem; margin-left: 5px; }
 
 /* =======================================================
-   PÁGINA PARCEIROS (BITTO STYLE) - AGORA NO PADRÃO
+   SEÇÃO EMBAIXADORES (INDEX) - HYBRID (FOMO + CALC)
    ======================================================= */
-/* Hero Escuro para manter identidade */
-.partner-hero-dark {
+.partner-cta-index {
+    margin: 60px 8% 100px;
     background: var(--dark);
-    color: white;
-    padding: 160px 8% 80px;
-    text-align: center;
+    border-radius: 40px;
     position: relative;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    color: white;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
 }
 
-.partner-hero-dark h1 {
-    font-family: var(--font-heading);
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 900;
+/* --- BARRA FOMO (Letreiro) --- */
+.fomo-bar {
+    background: rgba(204, 255, 0, 0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 12px 0;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    white-space: nowrap;
+}
+
+.fomo-track {
+    display: flex;
+    gap: 40px;
+    animation: scrollFomo 20s linear infinite;
+}
+
+.fomo-item {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.fomo-item span { color: var(--accent); }
+
+@keyframes scrollFomo {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* --- GRID PRINCIPAL --- */
+.partner-grid-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+    gap: 0;
+    min-height: 500px; /* Aumentei um pouco para caber a calc */
+}
+
+/* Coluna Esquerda (Texto + Calc) */
+.partner-text-area {
+    padding: 50px 60px;
+    z-index: 2;
+    position: relative;
+}
+
+.tag-partner {
+    background: var(--accent);
+    color: var(--dark);
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 800;
     margin-bottom: 20px;
-}
-
-.partner-tag-neon {
-    background: rgba(255,255,255,0.1);
-    color: var(--accent);
-    padding: 8px 20px;
-    border-radius: 50px;
-    font-weight: 700;
     display: inline-block;
+    box-shadow: 0 0 15px rgba(204, 255, 0, 0.4);
+}
+
+.partner-cta-index h2 {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.mini-calc-wrapper {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 20px;
+    margin: 25px 0;
+    backdrop-filter: blur(5px);
+}
+
+.mini-calc-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.mini-calc-display {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    color: var(--accent);
+    font-weight: 900;
+    line-height: 1;
     margin-bottom: 20px;
-    border: 1px solid var(--accent);
+    text-shadow: 0 0 20px rgba(204, 255, 0, 0.2);
+}
+
+/* Range Slider Compacto */
+input[type=range].mini-range {
+    width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.2);
+    height: 6px; border-radius: 10px; outline: none; margin: 10px 0 20px;
+}
+input[type=range].mini-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px;
+    background: white; border: 2px solid var(--accent);
+    border-radius: 50%; cursor: pointer; transition: 0.2s;
+}
+input[type=range].mini-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.btn-cta-glow {
+    background: white;
+    color: var(--dark);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 900;
+    text-decoration: none;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    transition: 0.3s;
+    box-shadow: 0 5px 20px rgba(255,255,255,0.1);
+}
+.btn-cta-glow:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(204, 255, 0, 0.3);
+}
+
+/* Coluna Direita (Visual) */
+.partner-visual-area {
+    position: relative;
+    height: 100%;
+    min-height: 500px;
+    background: radial-gradient(circle at center, rgba(0, 53, 255, 0.2) 0%, transparent 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Animação Celular */
+.mockup-container {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+}
+
+.notif-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    animation: floatUp 4s ease-in-out infinite;
+    border-left: 4px solid var(--primary);
+}
+.notif-card.delay { 
+    animation-delay: 2s; 
+    border-left-color: var(--accent);
+    opacity: 0.9;
+}
+.notif-content h5 { color: var(--dark); font-size: 0.85rem; margin-bottom: 2px; font-weight: 800; }
+.notif-content p { color: var(--text-gray); font-size: 0.75rem; font-weight: 600; margin: 0; }
+.money-badge { background: #dcfce7; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 0.7rem; margin-left: 5px; }
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* =======================================================
+   PÁGINA PARCEIROS (CSS DA PÁGINA ESPECÍFICA)
+   ======================================================= */
+/* Hero Escuro */
+.partner-hero-dark {
+    background: var(--dark); color: white;
+    padding: 160px 8% 80px; text-align: center;
+    position: relative; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.partner-hero-dark h1 { font-family: var(--font-heading); font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900; margin-bottom: 20px; }
+.partner-tag-neon {
+    background: rgba(255,255,255,0.1); color: var(--accent);
+    padding: 8px 20px; border-radius: 50px; font-weight: 700;
+    display: inline-block; margin-bottom: 20px; border: 1px solid var(--accent);
 }
 
 /* Calculadora Dark Mode */
 .calc-section-dark {
-    max-width: 900px;
-    margin: -60px auto 80px; /* Sobe por cima do Hero */
-    background: white;
-    border-radius: 30px;
-    padding: 50px;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.15);
-    border: 1px solid var(--border);
-    position: relative;
-    z-index: 10;
+    max-width: 900px; margin: -60px auto 80px;
+    background: white; border-radius: 30px; padding: 50px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.15); border: 1px solid var(--border);
+    position: relative; z-index: 10;
 }
-
 .calc-screen {
-    background: var(--dark);
-    border-radius: 20px;
-    padding: 40px 20px;
-    text-align: center;
-    margin-bottom: 40px;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+    background: var(--dark); border-radius: 20px; padding: 40px 20px;
+    text-align: center; margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
 }
-
 .calc-big-number {
-    font-family: var(--font-heading);
-    font-size: 4rem;
-    font-weight: 900;
-    color: var(--accent); /* Neon Green */
-    text-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
-    line-height: 1;
-    margin: 10px 0;
+    font-family: var(--font-heading); font-size: 4rem; font-weight: 900;
+    color: var(--accent); text-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+    line-height: 1; margin: 10px 0;
 }
-
 .calc-label { color: rgba(255,255,255,0.6); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-/* Range Slider Personalizado BITTO */
-input[type=range] {
-    width: 100%; -webkit-appearance: none; background: #e2e8f0;
-    height: 10px; border-radius: 10px; outline: none; margin: 20px 0;
-}
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 30px; height: 30px;
-    background: var(--primary); /* Azul Bitto */
-    border: 4px solid white;
-    box-shadow: 0 5px 15px rgba(0, 53, 255, 0.3);
-    border-radius: 50%; cursor: pointer; transition: 0.2s;
-}
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: var(--accent); }
-
-/* Grid de Beneficios Limpo */
+/* Grid Beneficios */
 .benefits-simple-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 40px; margin-bottom: 80px;
 }
 .benefit-card {
-    text-align: left; padding: 30px;
-    border-radius: 20px; background: #f8f9ff;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: 0.3s;
+    text-align: left; padding: 30px; border-radius: 20px; background: #f8f9ff;
+    border: 1px solid rgba(0,0,0,0.05); transition: 0.3s;
 }
 .benefit-card:hover { transform: translateY(-5px); background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 .benefit-icon { font-size: 2.5rem; margin-bottom: 15px; display: block; }
 
 /* Form Container */
 .form-box-clean {
-    max-width: 600px; margin: 0 auto;
-    background: white; padding: 40px;
+    max-width: 600px; margin: 0 auto; background: white; padding: 40px;
     border-radius: 24px; border: 1px solid var(--border);
 }
 
-/* Responsividade Index e Parceiros */
+/* Responsividade */
 @media (max-width: 900px) {
     .partner-grid-layout { grid-template-columns: 1fr; }
     .partner-text-area { padding: 40px 20px; text-align: center; }
     .partner-visual-area { min-height: 350px; background: none; }
-    .partner-features-list { align-items: center; }
+    .fomo-track { gap: 20px; }
     .calc-section-dark { padding: 30px 20px; margin-top: 20px; }
     .calc-big-number { font-size: 3rem; }
 }

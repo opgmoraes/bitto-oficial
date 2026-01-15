@@ -207,22 +207,32 @@
         </section>
 
         <section class="partner-cta-index">
-            <div class="partner-grid-layout">
-                
-                <div class="partner-text-area">
-                    <span class="tag-partner">👑 Embaixadores Bitto</span>
-                    <h2>Ganhe Dinheiro com <br><span class="highlight-text">Sua Influência</span></h2>
-                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 30px;">
-                        Receba notificações de vendas em tempo real e construa uma renda recorrente indicando a plataforma de estudos nº 1.
-                    </p>
-                    
-                    <ul class="partner-features-list">
-                        <li><div class="check-icon">✓</div> Notificação imediata de comissão</li>
-                        <li><div class="check-icon">✓</div> Rastreamento transparente</li>
-                        <li><div class="check-icon">✓</div> Pagamentos via Pix</li>
-                    </ul>
+            <div class="fomo-bar">
+                <div class="fomo-track">
+                    <div class="fomo-item">🔥 <span>@lucas.med</span> acabou de entrar</div>
+                    <div class="fomo-item">💸 Saque realizado: <span>R$ 156,00</span> por Julia</div>
+                    <div class="fomo-item">🚀 <span>+12</span> novos parceiros hoje</div>
+                    <div class="fomo-item">💎 Pedro atingiu <span>R$ 500,00</span> em comissões</div>
+                    <div class="fomo-item">🔥 <span>@lucas.med</span> acabou de entrar</div>
+                    <div class="fomo-item">💸 Saque realizado: <span>R$ 156,00</span> por Julia</div>
+                    <div class="fomo-item">🚀 <span>+12</span> novos parceiros hoje</div>
+                </div>
+            </div>
 
-                    <a href="site/parceiro.html" class="btn-cta-white">QUERO SER EMBAIXADOR</a>
+            <div class="partner-grid-layout">
+                <div class="partner-text-area">
+                    <span class="tag-partner">👑 Ganhe Dinheiro Estudando</span>
+                    <h2>Simule seus Ganhos <br>como Embaixador</h2>
+                    
+                    <div class="mini-calc-wrapper">
+                        <span class="mini-calc-label">Se eu fizer <span id="mini-calc-sales" style="color:white; font-weight:bold;">10</span> vendas no mês:</span>
+                        
+                        <input type="range" class="mini-range" id="mini-range" min="1" max="50" value="10" step="1">
+                        
+                        <div class="mini-calc-display">R$ <span id="mini-calc-value">130,90</span></div>
+                    </div>
+
+                    <a href="site/parceiro.html" class="btn-cta-glow">QUERO FATURAR ISSO</a>
                 </div>
 
                 <div class="partner-visual-area">
@@ -244,7 +254,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -305,5 +314,21 @@
     </footer>
 
     <script src="site/loading.js"></script>
+    
+    <script>
+        const miniRange = document.getElementById('mini-range');
+        const miniSales = document.getElementById('mini-calc-sales');
+        const miniValue = document.getElementById('mini-calc-value');
+        const COMISSAO_BASE = 13.09;
+
+        if(miniRange) {
+            miniRange.addEventListener('input', function() {
+                const vendas = this.value;
+                const total = vendas * COMISSAO_BASE;
+                miniSales.textContent = vendas;
+                miniValue.textContent = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            });
+        }
+    </script>
 </body>
 </html>
