@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="loading.css"> 
 </head>
-<body class="partner-body">
+<body style="background-color: var(--bg);">
 
     <nav>
         <div class="nav-container">
@@ -20,134 +20,130 @@
     </nav>
 
     <main>
-        <section class="partner-hero">
-            <span class="partner-tag">💎 Programa de Embaixadores</span>
-            <h1>Sua Audiência Vale <br><span class="highlight" style="background: #0035ff; color: white;">DINHEIRO REAL</span></h1>
-            <p style="margin-top: 25px;">Pare de criar conteúdo de graça. Indique a ferramenta nº 1 de estudos e receba até <strong>R$ 13,09 por venda</strong> comissões que caem direto na sua conta.</p>
+        <section class="partner-hero-dark">
+            <span class="partner-tag-neon">💎 Área VIP</span>
+            <h1>Transforme seguidores em <br><span style="color: var(--accent);">RENDA RECORRENTE</span></h1>
+            <p style="color: rgba(255,255,255,0.7); max-width: 600px; margin: 20px auto 0;">
+                O programa oficial para criadores. Indique a Bitto, ofereça descontos exclusivos e receba até <strong>R$ 13,09 por venda</strong> aprovada.
+            </p>
         </section>
 
-        <section class="section-padding">
-            <div class="benefits-grid">
-                <div class="benefit-item">
-                    <h3>💸 Alta Conversão</h3>
-                    <p>Todo estudante precisa estudar. Você não está vendendo supérfluos, está vendendo a dor urgente do seu seguidor.</p>
-                </div>
-                <div class="benefit-item">
-                    <h3>📈 Renda Recorrente</h3>
-                    <p>Vendeu uma vez, ganha sempre. Receba sua comissão todo mês enquanto o aluno permanecer ativo na plataforma.</p>
-                </div>
-                <div class="benefit-item">
-                    <h3>🎁 Cupom de 5% OFF</h3>
-                    <p>Entregue um presente para sua audiência. Com seu cupom exclusivo, seu seguidor ganha desconto e te adora por isso.</p>
-                </div>
-            </div>
-
-            <div class="calculator-section">
-                <h2 style="text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; margin-bottom: 10px; font-size: 2rem;">Quanto posso ganhar?</h2>
-                <p style="text-align: center; color: #64748b; margin-bottom: 40px;">Simulação baseada no <strong>Plano Trimestral</strong> (O favorito dos alunos).</p>
+        <section class="section-padding" style="padding-top: 0;">
+            
+            <div class="calc-section-dark">
+                <h2 style="text-align: center; font-family: var(--font-heading); margin-bottom: 10px;">Simulador de Ganhos</h2>
+                <p style="text-align: center; color: var(--text-gray); margin-bottom: 30px;">Baseado no Plano Trimestral (O mais vendido)</p>
                 
-                <div class="calc-display">
-                    <div class="calc-sub" style="color: rgba(255,255,255,0.7);">Sua comissão estimada por mês</div>
-                    <div class="calc-value">R$ <span id="display-earnings">0,00</span></div>
-                    <div class="calc-sub" style="color: #ccff00; font-weight: 700;">+ Bônus de Performance</div>
+                <div class="calc-screen">
+                    <div class="calc-label">Sua Comissão Mensal Estimada</div>
+                    <div class="calc-big-number">R$ <span id="display-earnings">0,00</span></div>
+                    <div class="calc-label" style="color: var(--accent); font-weight: bold;">+ Bônus por Performance</div>
                 </div>
 
                 <div class="range-container">
-                    <div class="range-label">
+                    <div class="range-label" style="display:flex; justify-content:space-between; font-weight:bold;">
                         <span>Vendas Ativas</span>
-                        <span id="display-sales" style="color: #0035ff;">0 alunos</span>
+                        <span id="display-sales" style="color: var(--primary);">0 alunos</span>
                     </div>
                     <input type="range" id="sales-range" min="0" max="200" value="0" step="1">
                 </div>
-
-                <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; line-height: 1.5; margin-top: 30px;">
-                    *Valores líquidos estimados já descontando taxas financeiras (cartão). <br>Cálculo base: Plano Trimestral (R$ 41,50) = Comissão Líquida de ~R$ 13,09.
-                </p>
             </div>
-        </section>
 
-        <section class="section-padding" id="apply-form" style="background: white;">
-            <div class="section-title">Inscrição para Embaixadores</div>
-            
-            <div class="form-container-styled">
-                <div class="warning-box" style="background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; padding: 15px; margin-bottom: 25px; border-radius: 8px; font-size: 0.9rem;">
-                    <strong>✋ Requisitos:</strong> Ter conta ativa no Instagram/TikTok/Twitter com fotos reais. Não aceitamos perfis de jogos de azar ou spam.
+            <div class="benefits-simple-grid">
+                <div class="benefit-card">
+                    <span class="benefit-icon">💸</span>
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 10px;">35% de Comissão</h3>
+                    <p style="color: var(--text-gray);">A maior comissão do mercado de educação. Ganhe sobre a venda e sobre as renovações.</p>
+                </div>
+                <div class="benefit-card">
+                    <span class="benefit-icon">🎫</span>
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 10px;">Cupom de 5% OFF</h3>
+                    <p style="color: var(--text-gray);">Seus seguidores ganham desconto real. Você não pede favor, você entrega valor.</p>
+                </div>
+                <div class="benefit-card">
+                    <span class="benefit-icon">📱</span>
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 10px;">Grupo Exclusivo</h3>
+                    <p style="color: var(--text-gray);">Acesso direto ao time da Bitto e materiais prontos para divulgar nos stories.</p>
+                </div>
+            </div>
+
+            <div class="form-box-clean" id="apply-form">
+                <h2 style="text-align: center; font-family: var(--font-heading); margin-bottom: 30px;">Quero ser Embaixador</h2>
+                
+                <div style="background: #f0f9ff; border-left: 4px solid var(--primary); padding: 15px; margin-bottom: 25px; border-radius: 8px; font-size: 0.9rem; color: #1e3a8a;">
+                    <strong>ℹ️ Como funciona:</strong> Preencha os dados abaixo. Após enviar, você será redirecionado para o nosso Grupo de Onboarding no WhatsApp.
                 </div>
 
                 <form id="partnerForm">
-                    <div class="form-group">
-                        <label>Nome Completo</label>
-                        <input type="text" name="nome" class="form-input" required placeholder="Seu nome">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:700; margin-bottom:8px;">Nome Completo</label>
+                        <input type="text" name="nome" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="Seu nome">
                     </div>
                     
-                    <div class="form-group">
-                        <label>Email Pix</label>
-                        <input type="email" name="email" class="form-input" required placeholder="Para receber pagamentos e contato">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:700; margin-bottom:8px;">Email (Chave Pix)</label>
+                        <input type="email" name="email" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="email@exemplo.com">
                     </div>
 
-                    <div class="form-group">
-                        <label>WhatsApp</label>
-                        <input type="tel" name="whatsapp" class="form-input" required placeholder="(DDD) 99999-9999">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:700; margin-bottom:8px;">WhatsApp</label>
+                        <input type="tel" name="whatsapp" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="(00) 00000-0000">
                     </div>
 
-                    <div class="form-group">
-                        <label>Seu @ (Instagram/TikTok)</label>
-                        <input type="text" name="social" class="form-input" required placeholder="@seuusuario">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:700; margin-bottom:8px;">Seu Instagram/TikTok</label>
+                        <input type="text" name="social" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;" required placeholder="@usuario">
                     </div>
 
-                    <div class="form-group">
-                        <label>Quantas pessoas vêem seus stories?</label>
-                        <select name="views" class="form-input">
-                            <option value="Iniciante">Menos de 500</option>
-                            <option value="500-2k">500 a 2.000</option>
-                            <option value="+2k">Mais de 2.000</option>
+                    <div class="form-group" style="margin-bottom: 30px;">
+                        <label style="display:block; font-weight:700; margin-bottom:8px;">Média de Views nos Stories</label>
+                        <select name="views" class="form-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ccc;">
+                            <option value="Iniciante">- 500 visualizações</option>
+                            <option value="Medio">500 a 2.000 visualizações</option>
+                            <option value="Alto">+ 2.000 visualizações</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn-main" style="width: 100%; border:none; cursor: pointer; font-size: 1.1rem; margin-top: 10px;">
-                        QUERO FATURAR COM A BITTO
+                    <button type="submit" class="btn-main" style="width: 100%; border:none; cursor: pointer; font-size: 1.1rem;">
+                        ENVIAR CANDIDATURA 🚀
                     </button>
-                    <p style="text-align: center; font-size: 0.8rem; color: #94a3b8; margin-top: 15px;">Ao enviar, você será redirecionado para o grupo VIP.</p>
                 </form>
             </div>
         </section>
 
     </main>
 
-    <footer style="background: #0a0a0b; color: white; padding: 40px 5%; text-align: center;">
+    <footer style="background: var(--dark); color: white; padding: 40px 5%; text-align: center;">
         <p>© 2026 Bitto Tecnologia. Todos os direitos reservados.</p>
     </footer>
 
     <script>
-        // --- LÓGICA DA CALCULADORA ATUALIZADA (PLANO TRIMESTRAL) ---
+        // JS DA CALCULADORA (Ajustado para R$ 13,09)
         const salesRange = document.getElementById('sales-range');
         const displaySales = document.getElementById('display-sales');
         const displayEarnings = document.getElementById('display-earnings');
-
-        // Valor da comissão unitária do Plano Trimestral (Líquido)
         const COMISSAO_TRIMESTRAL = 13.09;
 
         salesRange.addEventListener('input', function() {
             const vendas = this.value;
             const ganhos = vendas * COMISSAO_TRIMESTRAL;
-            
             displaySales.textContent = vendas + " alunos";
             displayEarnings.textContent = ganhos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         });
 
-        // --- ENVIO GOOGLE SHEETS ---
+        // JS DO FORMULÁRIO
         document.getElementById('partnerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = this.querySelector('button');
             const originalText = btn.innerText;
-            btn.innerText = "Processando...";
+            btn.innerText = "Enviando...";
             btn.disabled = true;
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // COLOQUE SEU LINK DO GOOGLE SCRIPT AQUI
-            const GOOGLE_SCRIPT_URL = 'SEU_URL_DO_GOOGLE_SCRIPT_AQUI'; 
+            // INSIRA SEU LINK DO GOOGLE APPS SCRIPT AQUI
+            const GOOGLE_SCRIPT_URL = 'SEU_LINK_DO_APPS_SCRIPT_AQUI'; 
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
@@ -156,8 +152,8 @@
                 body: JSON.stringify(data)
             })
             .then(() => {
-                // LINK DO GRUPO WHATSAPP
-                window.location.href = "https://chat.whatsapp.com/SEU_GRUPO";
+                // INSIRA O LINK DO SEU GRUPO DE WHATSAPP AQUI
+                window.location.href = "https://chat.whatsapp.com/SEU_GRUPO_AQUI";
             })
             .catch(error => {
                 alert('Erro ao enviar. Tente novamente.');

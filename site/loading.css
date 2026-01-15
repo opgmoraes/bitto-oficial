@@ -233,181 +233,248 @@ footer { background: var(--dark); color: white; padding: 80px 8% 20px; }
     h1 { font-size: 2.5rem; }
 }
 
-/* =========================================
-   ESTILOS DA PÁGINA DE PARCEIROS (FIX)
-   ========================================= */
-
-/* Reset básico garantido para esta página */
-.partner-body {
-    background-color: #f8f9ff;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: #0a0a0b;
-}
-
-/* Hero Section Refinada */
-.partner-hero {
-    padding: 160px 5% 80px;
-    text-align: center;
-    background: radial-gradient(circle at 50% 30%, rgba(204, 255, 0, 0.12) 0%, transparent 70%);
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.partner-tag {
-    background: #0a0a0b; 
-    color: #ccff00;
-    padding: 6px 16px; 
-    border-radius: 50px; 
-    font-weight: 800;
-    font-size: 0.85rem; 
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 25px; 
-    display: inline-block;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-.partner-hero h1 {
-    font-family: 'Outfit', sans-serif;
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    line-height: 1.1;
-    font-weight: 900;
-    margin-bottom: 20px;
-    color: #0a0a0b;
-}
-
-.partner-hero p {
-    font-size: 1.1rem;
-    color: #475569;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
-}
-
-/* Grid de Benefícios */
-.benefits-grid {
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px; 
-    margin: 60px auto;
-    max-width: 1200px;
-    padding: 0 5%;
-}
-
-.benefit-item {
-    background: white;
-    padding: 35px;
-    border-radius: 24px;
-    border: 1px solid rgba(0,0,0,0.06);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.benefit-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 53, 255, 0.08);
-    border-color: rgba(0, 53, 255, 0.2);
-}
-
-.benefit-item h3 { 
-    font-family: 'Outfit', sans-serif; 
-    font-size: 1.4rem;
-    color: #0035ff; 
-    margin: 15px 0 10px; 
-    font-weight: 800;
-}
-
-/* Calculadora Premium */
-.calculator-section {
-    background: #ffffff; 
-    border-radius: 40px; 
-    padding: 50px;
-    box-shadow: 0 30px 60px rgba(0, 53, 255, 0.08); 
-    border: 1px solid rgba(0,0,0,0.05);
-    max-width: 900px; 
-    margin: 0 auto 100px;
+/* =======================================================
+   SEÇÃO EMBAIXADORES (INDEX) - CORRIGIDA E BLINDADA
+   ======================================================= */
+.partner-cta-index {
+    margin: 60px 8% 100px;
+    background: var(--dark);
+    border-radius: 40px;
     position: relative;
     overflow: hidden;
-}
-
-/* Efeito de fundo na calculadora */
-.calculator-section::before {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(204, 255, 0, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.calc-display {
-    background: #0a0a0b; 
-    border-radius: 24px; 
-    padding: 40px;
-    text-align: center; 
-    margin-bottom: 40px; 
     color: white;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.1);
+    /* Garante que o container tenha tamanho */
+    display: block; 
+}
+
+.partner-grid-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+    gap: 0; /* Gap zero para controle total via padding */
+    min-height: 450px;
+}
+
+.partner-text-area {
+    padding: 60px;
+    z-index: 2;
     position: relative;
 }
 
-.calc-value {
-    font-size: clamp(3rem, 6vw, 4.5rem); 
-    font-family: 'Outfit', sans-serif;
-    font-weight: 900; 
-    color: #ccff00; 
+.partner-visual-area {
+    position: relative;
+    height: 100%;
+    min-height: 450px;
+    background: radial-gradient(circle at center, rgba(0, 53, 255, 0.15) 0%, transparent 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Adiciona uma borda sutil separando as colunas se quiser, ou remove */
+    border-left: 1px solid rgba(255,255,255,0.05);
+}
+
+.tag-partner {
+    background: rgba(204, 255, 0, 0.1);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: inline-block;
+    border: 1px solid rgba(204, 255, 0, 0.3);
+}
+
+.partner-cta-index h2 {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.highlight-text { color: var(--accent); }
+
+.partner-features-list {
+    list-style: none;
+    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.partner-features-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.9);
+}
+
+.check-icon {
+    color: var(--dark);
+    background: var(--accent);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 900;
+}
+
+.btn-cta-white {
+    background: white;
+    color: var(--dark);
+    padding: 1rem 2.2rem;
+    border-radius: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.3s;
+}
+.btn-cta-white:hover {
+    background: var(--accent);
+    transform: translateY(-3px);
+}
+
+/* Animação Celular Index */
+.mockup-container {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+}
+
+.notif-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    animation: floatUp 4s ease-in-out infinite;
+    border-left: 4px solid var(--primary);
+}
+.notif-card.delay { 
+    animation-delay: 2s; 
+    border-left-color: var(--accent);
+    opacity: 0.9;
+}
+.notif-content h5 { color: var(--dark); font-size: 0.9rem; margin-bottom: 2px; font-weight: 800; }
+.notif-content p { color: var(--text-gray); font-size: 0.8rem; font-weight: 600; margin: 0; }
+.money-badge { background: #dcfce7; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 0.75rem; margin-left: 5px; }
+
+/* =======================================================
+   PÁGINA PARCEIROS (BITTO STYLE) - AGORA NO PADRÃO
+   ======================================================= */
+/* Hero Escuro para manter identidade */
+.partner-hero-dark {
+    background: var(--dark);
+    color: white;
+    padding: 160px 8% 80px;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.partner-hero-dark h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+.partner-tag-neon {
+    background: rgba(255,255,255,0.1);
+    color: var(--accent);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 20px;
+    border: 1px solid var(--accent);
+}
+
+/* Calculadora Dark Mode */
+.calc-section-dark {
+    max-width: 900px;
+    margin: -60px auto 80px; /* Sobe por cima do Hero */
+    background: white;
+    border-radius: 30px;
+    padding: 50px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.15);
+    border: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+}
+
+.calc-screen {
+    background: var(--dark);
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+}
+
+.calc-big-number {
+    font-family: var(--font-heading);
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--accent); /* Neon Green */
+    text-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
     line-height: 1;
     margin: 10px 0;
-    text-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
 }
 
-.calc-sub { 
-    font-size: 1rem; 
-    opacity: 0.7; 
-    font-weight: 500;
-}
+.calc-label { color: rgba(255,255,255,0.6); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-.range-container { margin: 40px 0 20px; }
-.range-label { 
-    display: flex; 
-    justify-content: space-between; 
-    font-weight: 700; 
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    color: #0a0a0b;
-}
-
+/* Range Slider Personalizado BITTO */
 input[type=range] {
-    width: 100%; 
-    -webkit-appearance: none; 
-    background: #e2e8f0;
-    height: 12px; 
-    border-radius: 10px; 
-    outline: none;
+    width: 100%; -webkit-appearance: none; background: #e2e8f0;
+    height: 10px; border-radius: 10px; outline: none; margin: 20px 0;
 }
 input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; 
-    width: 32px; height: 32px;
-    background: #0035ff; 
+    -webkit-appearance: none; width: 30px; height: 30px;
+    background: var(--primary); /* Azul Bitto */
     border: 4px solid white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    border-radius: 50%; 
-    cursor: pointer; 
-    transition: transform 0.2s;
+    box-shadow: 0 5px 15px rgba(0, 53, 255, 0.3);
+    border-radius: 50%; cursor: pointer; transition: 0.2s;
 }
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: var(--accent); }
 
-/* Formulário Estilizado */
-.form-container-styled {
-    max-width: 600px;
-    margin: 0 auto;
-    background: white;
-    padding: 40px;
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
+/* Grid de Beneficios Limpo */
+.benefits-simple-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 40px; margin-bottom: 80px;
+}
+.benefit-card {
+    text-align: left; padding: 30px;
+    border-radius: 20px; background: #f8f9ff;
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: 0.3s;
+}
+.benefit-card:hover { transform: translateY(-5px); background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+.benefit-icon { font-size: 2.5rem; margin-bottom: 15px; display: block; }
+
+/* Form Container */
+.form-box-clean {
+    max-width: 600px; margin: 0 auto;
+    background: white; padding: 40px;
+    border-radius: 24px; border: 1px solid var(--border);
 }
 
-/* Responsividade Extra */
-@media (max-width: 768px) {
-    .partner-hero { padding-top: 120px; }
-    .calculator-section { padding: 30px 20px; border-radius: 24px; }
-    .calc-display { padding: 30px 20px; }
+/* Responsividade Index e Parceiros */
+@media (max-width: 900px) {
+    .partner-grid-layout { grid-template-columns: 1fr; }
+    .partner-text-area { padding: 40px 20px; text-align: center; }
+    .partner-visual-area { min-height: 350px; background: none; }
+    .partner-features-list { align-items: center; }
+    .calc-section-dark { padding: 30px 20px; margin-top: 20px; }
+    .calc-big-number { font-size: 3rem; }
 }
