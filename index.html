@@ -206,55 +206,14 @@
             </div>
         </section>
 
-        <section class="partner-cta-index">
-            <div class="fomo-bar">
-                <div class="fomo-track">
-                    <div class="fomo-item">🔥 <span>@lucas.med</span> acabou de entrar</div>
-                    <div class="fomo-item">💸 Saque realizado: <span>R$ 156,00</span> por Julia</div>
-                    <div class="fomo-item">🚀 <span>+12</span> novos parceiros hoje</div>
-                    <div class="fomo-item">💎 Pedro atingiu <span>R$ 500,00</span> em comissões</div>
-                    <div class="fomo-item">🔥 <span>@lucas.med</span> acabou de entrar</div>
-                    <div class="fomo-item">💸 Saque realizado: <span>R$ 156,00</span> por Julia</div>
-                    <div class="fomo-item">🚀 <span>+12</span> novos parceiros hoje</div>
-                </div>
-            </div>
-
-            <div class="partner-grid-layout">
-                <div class="partner-text-area">
-                    <span class="tag-partner">👑 Ganhe Dinheiro Estudando</span>
-                    <h2>Simule seus Ganhos <br>como Embaixador</h2>
-                    
-                    <div class="mini-calc-wrapper">
-                        <span class="mini-calc-label">Se eu fizer <span id="mini-calc-sales" style="color:white; font-weight:bold;">10</span> vendas no mês:</span>
-                        
-                        <input type="range" class="mini-range" id="mini-range" min="1" max="50" value="10" step="1">
-                        
-                        <div class="mini-calc-display">R$ <span id="mini-calc-value">130,90</span></div>
-                    </div>
-
-                    <a href="site/parceiro.html" class="btn-cta-glow">QUERO FATURAR ISSO</a>
-                </div>
-
-                <div class="partner-visual-area">
-                    <div class="mockup-container">
-                        <div class="notif-card">
-                            <div class="notif-icon-box" style="background: #dcfce7; color: #16a34a;">🤑</div>
-                            <div class="notif-content">
-                                <h5>Nova Venda Aprovada!</h5>
-                                <p>Você recebeu <span class="money-badge" style="background: #16a34a; color: white;">+ R$ 13,09</span></p>
-                            </div>
-                        </div>
-
-                        <div class="notif-card delay">
-                            <div class="notif-icon-box">🔄</div>
-                            <div class="notif-content">
-                                <h5>Renovação Assinatura</h5>
-                                <p>Recorrência ativa <span class="money-badge">+ R$ 5,92</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <section class="partner-banner-clean">
+            <span style="color: var(--accent); font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: block;">Área de Creators</span>
+            <h2>Influenciador ou Criador de Conteúdo?</h2>
+            <p>
+                Temos um programa de embaixadores com comissão de 35% e dashboard exclusivo.
+                Monetize sua audiência ajudando estudantes.
+            </p>
+            <a href="site/parceiro.html" class="btn-banner-link">Conhecer Programa</a>
         </section>
 
         <section class="final-cta">
@@ -314,21 +273,5 @@
     </footer>
 
     <script src="site/loading.js"></script>
-    
-    <script>
-        const miniRange = document.getElementById('mini-range');
-        const miniSales = document.getElementById('mini-calc-sales');
-        const miniValue = document.getElementById('mini-calc-value');
-        const COMISSAO_BASE = 13.09;
-
-        if(miniRange) {
-            miniRange.addEventListener('input', function() {
-                const vendas = this.value;
-                const total = vendas * COMISSAO_BASE;
-                miniSales.textContent = vendas;
-                miniValue.textContent = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            });
-        }
-    </script>
 </body>
 </html>
